@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "ProjectoPruebasSCharacter.generated.h"
 
+class UHealthComponent;
 class UInputComponent;
 class USkeletalMeshComponent;
 class USceneComponent;
@@ -36,6 +37,9 @@ public:
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)
+	UHealthComponent* HealthComponent;
 
 protected:
 	virtual void BeginPlay();
@@ -93,6 +97,8 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
 	// APawn interface

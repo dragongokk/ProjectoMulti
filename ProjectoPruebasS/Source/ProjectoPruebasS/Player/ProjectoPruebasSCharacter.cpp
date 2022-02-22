@@ -1,10 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ProjectoPruebasSCharacter.h"
-#include "ProjectoPruebasSProjectile.h"
+#include "../ProjectoPruebasSProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/HealthComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
@@ -28,7 +29,10 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
-	
+
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
+	this->AddOwnedComponent(HealthComponent);
+	HealthComponent->SetIsReplicated(true);
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -121,41 +125,21 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 
 void AProjectoPruebasSCharacter::OnFire()
 {
-	// Try and fire a projectile
-	if (ProjectileClass != nullptr)
+	FHitResult HitResult;
+	FTransform CameraTrans = FirstPersonCameraComponent->GetComponentTransform();
+	FVector EndPoint =  CameraTrans.GetLocation() + ( FirstPersonCameraComponent->GetForwardVector() * 10000);
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	this->GetWorld()->LineTraceSingleByChannel(HitResult,CameraTrans.GetLocation(),EndPoint,ECC_GameTraceChannel1,Params);
+	if(IsValid(HitResult.GetActor()))
 	{
-		UWorld* const World = GetWorld();
-		if (World != nullptr)
-		{
-			const FRotator SpawnRotation = GetControlRotation();
-			// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-			const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation())+ SpawnRotation.RotateVector(GunOffset);
-
-			//Set Spawn Collision Handling Override
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-			
-			// Spawn the projectile at the muzzle
-			World->SpawnActor<AProjectoPruebasSProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParams);
-		}
+		
+		DrawDebugLine(GetWorld(),CameraTrans.GetLocation(),HitResult.ImpactPoint,FColor::Red,false,10);
+		DrawDebugSphere(GetWorld(),HitResult.ImpactPoint,20,32,FColor::Red,false,10);
+		if(GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, HitResult.BoneName.ToString());  
 	}
-
-	// Try and play the sound if specified
-	if (FireSound != nullptr)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	}
-
-	// Try and play a firing animation if specified
-	if (FireAnimation != nullptr)
-	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if (AnimInstance != nullptr)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
-	}
+	
 }
 
 
@@ -225,6 +209,15 @@ void AProjectoPruebasSCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	HealthComponent->UpdateHealth(-DamageAmount);
+	
+	return DamageAmount;
 }
 
 

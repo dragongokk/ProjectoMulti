@@ -2,7 +2,7 @@
 
 #include "ProjectoPruebasSProjectile.h"
 
-#include "ProjectoPruebasSCharacter.h"
+#include "Player/ProjectoPruebasSCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 
