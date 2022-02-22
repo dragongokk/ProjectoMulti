@@ -69,11 +69,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UAnimMontage* FireAnimation;
 
+	//Hay que càmbiar despues toda la logica de las pistolas a los bp + hacer controllers
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	UParticleSystem* ParticleSystemShoot;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	FVector ScaleShootEffect;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	bool bDebug;
 public:
 	AProjectoPruebasSCharacter();
 
 	UFUNCTION(BlueprintCallable)
 	FRotator GetAimView();
+
+	void SimulateShoot(FHitResult hitResult);
 
 protected:
 	

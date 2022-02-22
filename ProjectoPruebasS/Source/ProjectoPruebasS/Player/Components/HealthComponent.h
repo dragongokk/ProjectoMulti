@@ -24,7 +24,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="ZeroHealth")
 	FOnZeroHealth OnZeroHealth;
 	
-	UPROPERTY(Transient,Replicated,EditAnywhere,BlueprintReadWrite,Category = Config)
+	UPROPERTY(Replicated,EditAnywhere,BlueprintReadWrite,Category = Config)
 	float MaxHealth;
 
 	UPROPERTY(Transient,ReplicatedUsing=OnRep_CurrentHealth)

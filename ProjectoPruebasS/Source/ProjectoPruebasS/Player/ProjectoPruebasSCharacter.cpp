@@ -21,9 +21,10 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
 	// set our turn rates for input
+	bDebug = true;
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-
+	ScaleShootEffect = FVector(1,1,1);
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -123,6 +124,8 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 	return AimRotLS;
 }
 
+
+
 void AProjectoPruebasSCharacter::OnFire()
 {
 	FHitResult HitResult;
@@ -131,17 +134,26 @@ void AProjectoPruebasSCharacter::OnFire()
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 	this->GetWorld()->LineTraceSingleByChannel(HitResult,CameraTrans.GetLocation(),EndPoint,ECC_GameTraceChannel1,Params);
+	SimulateShoot(HitResult);
 	if(IsValid(HitResult.GetActor()))
 	{
+		if(bDebug)
+		{
+			DrawDebugLine(GetWorld(),CameraTrans.GetLocation(),HitResult.ImpactPoint,FColor::Red,false,10);
+			DrawDebugSphere(GetWorld(),HitResult.ImpactPoint,20,32,FColor::Red,false,10);
+			if(GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, HitResult.BoneName.ToString());
+		}
 		
-		DrawDebugLine(GetWorld(),CameraTrans.GetLocation(),HitResult.ImpactPoint,FColor::Red,false,10);
-		DrawDebugSphere(GetWorld(),HitResult.ImpactPoint,20,32,FColor::Red,false,10);
-		if(GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, HitResult.BoneName.ToString());  
 	}
 	
 }
 
+void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult)
+{
+	UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot,FP_Gun,TEXT("Muzzle"),FVector(ForceInit),FRotator::ZeroRotator,ScaleShootEffect);
+	
+}
 
 //Commenting this section out to be consistent with FPS BP template.
 //This allows the user to turn without using the right virtual joystick
