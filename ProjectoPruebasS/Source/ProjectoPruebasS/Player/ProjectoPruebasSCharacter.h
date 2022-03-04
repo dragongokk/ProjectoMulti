@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "ProjectoPruebasSCharacter.generated.h"
 
+class AProjectoPruebasSCharacter;
 class UHealthComponent;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -13,6 +14,21 @@ class USceneComponent;
 class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
+
+USTRUCT()
+struct FInstantHitInfo
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FTransform RelativeTransform;
+
+	UPROPERTY()
+	FHitResult HitResult;
+
+	UPROPERTY()
+	bool Shooting = true;
+};
 
 UCLASS(config=Game)
 class AProjectoPruebasSCharacter : public ACharacter
@@ -41,10 +57,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)
 	UHealthComponent* HealthComponent;
 
-protected:
-	virtual void BeginPlay();
-
-public:
+	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
+	FInstantHitInfo OnHitInfo;
+	
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseTurnRate;
@@ -74,19 +89,42 @@ public:
 	UParticleSystem* ParticleSystemShoot;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	UParticleSystem* ParticleSystemHit;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
 	FVector ScaleShootEffect;
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	FVector ScaleShootHit;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
 	bool bDebug;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	float AngleLimit;
+	
 public:
 	AProjectoPruebasSCharacter();
 
 	UFUNCTION(BlueprintCallable)
 	FRotator GetAimView();
 
-	void SimulateShoot(FHitResult hitResult);
+	void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
+private:
+	float InfiValueMove = 0;
 
 protected:
+
+	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaSeconds) override;
+	UFUNCTION()
+	void OnRep_HitInfo();
+	
+	UFUNCTION(Server,Reliable,WithValidation)
+	void ConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+
+	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform);
 	
 	/** Fires a projectile. */
 	void OnFire();
@@ -109,19 +147,16 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
+	void MoveInfiForward(float Val);
+
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-protected:
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	/* 
-	 * Configures input for touchscreen devices if there is a valid touch interface for doing so 
-	 *
-	 * @param	InputComponent	The input component pointer to bind controls to
-	 * @returns true if touch controls were enabled.
-	 */
+	void ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform);
 
 public:
 	/** Returns Mesh1P subobject **/
@@ -130,4 +165,5 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 };
+
 

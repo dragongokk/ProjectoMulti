@@ -9,6 +9,8 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -24,7 +26,8 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	bDebug = true;
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	ScaleShootEffect = FVector(1,1,1);
+	ScaleShootEffect = FVector(1, 1, 1);
+	ScaleShootHit = FVector(1, 1, 1);
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -47,16 +50,15 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	Mesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh3P"));
 	Mesh3P->SetupAttachment(GetCapsuleComponent());
 	Mesh3P->bOwnerNoSee = true;
-	
+
 
 	// Create a gun mesh component
 	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(false);			// otherwise won't be visible in multiplayer
+	FP_Gun->SetOnlyOwnerSee(false); // otherwise won't be visible in multiplayer
 	FP_Gun->bCastDynamicShadow = false;
 	FP_Gun->CastShadow = false;
 	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
 	FP_Gun->SetupAttachment(RootComponent);
-	
 
 
 	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
@@ -77,14 +79,27 @@ void AProjectoPruebasSCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	if(IsLocallyControlled())
+	if (IsLocallyControlled())
 	{
-		FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
-	}else
+		FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+		                          TEXT("GripPoint"));
+	}
+	else
 	{
-		FP_Gun->AttachToComponent(Mesh3P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+		FP_Gun->AttachToComponent(Mesh3P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+		                          TEXT("GripPoint"));
 	}
 }
+
+void AProjectoPruebasSCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (InfiValueMove != 0)
+	{
+		MoveForward(InfiValueMove);
+	}
+}
+
 
 //////////////////////////////////////////////////////////////////////////// Input
 
@@ -101,9 +116,9 @@ void AProjectoPruebasSCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AProjectoPruebasSCharacter::OnFire);
 
 
-
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &AProjectoPruebasSCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveInfiForward", this, &AProjectoPruebasSCharacter::MoveInfiForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AProjectoPruebasSCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
@@ -115,6 +130,31 @@ void AProjectoPruebasSCharacter::SetupPlayerInputComponent(class UInputComponent
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AProjectoPruebasSCharacter::LookUpAtRate);
 }
 
+void AProjectoPruebasSCharacter::ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform)
+{
+	FVector BoxExtent = Box.GetExtent();
+	FVector BoxCenter = Box.GetCenter();
+
+	BoxExtent.X = UKismetMathLibrary::Max(20.0f,BoxExtent.X);
+	BoxExtent.Y = UKismetMathLibrary::Max(20.0f,BoxExtent.Y);
+	BoxExtent.Z = UKismetMathLibrary::Max(20.0f,BoxExtent.Z);
+
+	if(	FMath::Abs(Impact.Location.X - BoxCenter.X) < BoxExtent.X &&
+		FMath::Abs(Impact.Location.Y - BoxCenter.Y) < BoxExtent.Y &&
+		FMath::Abs(Impact.Location.Z - BoxCenter.Z) < BoxExtent.Z)
+	{
+		ProcessHitConfirmed(Impact,RelativeTransform);
+	}
+}
+
+void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
+{
+	if (Val != 0)
+	{
+		InfiValueMove = Val;
+	}
+}
+
 FRotator AProjectoPruebasSCharacter::GetAimView()
 {
 	const FVector AimDirWS = GetBaseAimRotation().Vector();
@@ -124,36 +164,125 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 	return AimRotLS;
 }
 
-
-
 void AProjectoPruebasSCharacter::OnFire()
 {
-	FHitResult HitResult;
-	FTransform CameraTrans = FirstPersonCameraComponent->GetComponentTransform();
-	FVector EndPoint =  CameraTrans.GetLocation() + ( FirstPersonCameraComponent->GetForwardVector() * 10000);
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-	this->GetWorld()->LineTraceSingleByChannel(HitResult,CameraTrans.GetLocation(),EndPoint,ECC_GameTraceChannel1,Params);
-	SimulateShoot(HitResult);
-	if(IsValid(HitResult.GetActor()))
+	if (this->IsLocallyControlled() && GetNetMode() == NM_Client)
 	{
-		if(bDebug)
+		FHitResult HitResult;
+		FTransform CameraTrans = FirstPersonCameraComponent->GetComponentTransform();
+		FVector EndPoint = CameraTrans.GetLocation() + (FirstPersonCameraComponent->GetForwardVector() * 10000);
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this);
+		this->GetWorld()->LineTraceSingleByChannel(HitResult, CameraTrans.GetLocation(), EndPoint,
+		                                           ECC_GameTraceChannel1, Params);
+		if (IsValid(HitResult.GetActor()) && HitResult.GetActor()->GetRemoteRole() == ROLE_Authority)
 		{
-			DrawDebugLine(GetWorld(),CameraTrans.GetLocation(),HitResult.ImpactPoint,FColor::Red,false,10);
-			DrawDebugSphere(GetWorld(),HitResult.ImpactPoint,20,32,FColor::Red,false,10);
-			if(GEngine)
+			//We hit a character so where are going to try a precise shoot
+
+			FTransform RelativeTransform;
+			RelativeTransform.SetLocation(UKismetMathLibrary::InverseTransformLocation(
+				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(), HitResult.ImpactPoint));
+			RelativeTransform.SetRotation(UKismetMathLibrary::InverseTransformRotation(
+				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(),
+				HitResult.ImpactNormal.Rotation()).Quaternion());
+			SimulateShoot(HitResult, RelativeTransform);
+			ConfirmHitServer(HitResult, RelativeTransform,Cast<AProjectoPruebasSCharacter>(HitResult.GetActor()));
+		}
+		else
+		{
+			if (HitResult.bBlockingHit)
+			{
+				ConfirmHitServer(HitResult, FTransform::Identity,nullptr);
+			}
+			else
+			{
+				//MissHitServer();
+			}
+		}
+
+		if (bDebug)
+		{
+			DrawDebugLine(GetWorld(), CameraTrans.GetLocation(), HitResult.ImpactPoint, FColor::Red, false, 10);
+			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 20, 32, FColor::Red, false, 10);
+			if (GEngine)
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, HitResult.BoneName.ToString());
 		}
-		
 	}
-	
 }
 
-void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult)
+void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
 {
-	UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot,FP_Gun,TEXT("Muzzle"),FVector(ForceInit),FRotator::ZeroRotator,ScaleShootEffect);
-	
+	UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot, FP_Gun,TEXT("Muzzle"), FVector(ForceInit),
+	                                       FRotator::ZeroRotator, ScaleShootEffect);
+	if (hitResult.GetActor())
+
+	{
+		UGameplayStatics::SpawnEmitterAttached(ParticleSystemHit, hitResult.GetActor()->GetRootComponent(), NAME_None,
+		                                       RelativeTransForm.GetLocation(),
+		                                       RelativeTransForm.GetRotation().Rotator(), ScaleShootHit/hitResult.GetActor()->GetRootComponent()->GetComponentScale());
+	}
 }
+
+void AProjectoPruebasSCharacter::OnRep_HitInfo()
+{
+	SimulateShoot(OnHitInfo.HitResult, OnHitInfo.RelativeTransform);
+}
+
+
+bool AProjectoPruebasSCharacter::ConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
+{
+	return true;
+}
+
+void AProjectoPruebasSCharacter::ConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
+{
+	if(Impact.GetActor() || Impact.bBlockingHit)
+	{
+		FVector Origin = FP_Gun->GetSocketLocation("Muzzle"); //Posible método para conseguir la localizancion del comienzo del disparo
+		FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
+
+		float viewDot = FVector::DotProduct(GetViewRotation().Vector(),DirVector);
+		if(viewDot > AngleLimit)
+		{
+			if(!(Impact.GetActor()) && Impact.bBlockingHit)
+			{
+				ProcessHitConfirmed(Impact,RelativeTransform);
+			}else if(Impact.GetActor())
+			{
+				if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
+				{
+					ProcessHitConfirmed(Impact,RelativeTransform); //Le damos la razón automaticamente si el objeto es estático
+				}else
+				{
+					if(!(HitCharacter))
+					{
+						const FBox Box = Impact.GetActor()->GetComponentsBoundingBox();
+
+						ComputeBoxValidation(Box,Impact,RelativeTransform);
+							
+					}else
+					{
+						const FBox Box = HitCharacter->Mesh3P->GetBodyInstance(Impact.BoneName)->GetBodyBounds();
+
+						ComputeBoxValidation(Box,Impact,RelativeTransform);
+					}
+				}
+			}
+		}
+	}
+}
+
+void AProjectoPruebasSCharacter::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform)
+{
+	if (IsValid(Impact.GetActor()))
+	{
+		OnHitInfo.HitResult = Impact;
+		OnHitInfo.RelativeTransform = RelativeTransform;
+		OnHitInfo.Shooting = !OnHitInfo.Shooting;
+	}
+}
+
+
 
 //Commenting this section out to be consistent with FPS BP template.
 //This allows the user to turn without using the right virtual joystick
@@ -224,12 +353,16 @@ void AProjectoPruebasSCharacter::LookUpAtRate(float Rate)
 }
 
 float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
+                                             AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	HealthComponent->UpdateHealth(-DamageAmount);
-	
+
 	return DamageAmount;
 }
 
-
+void AProjectoPruebasSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(AProjectoPruebasSCharacter, OnHitInfo, COND_SkipOwner);
+}
