@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Weapon.h"
 #include "GameFramework/Character.h"
 #include "ProjectoPruebasSCharacter.generated.h"
 
@@ -15,20 +16,7 @@ class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
 
-USTRUCT()
-struct FInstantHitInfo
-{
-	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY()
-	FTransform RelativeTransform;
-
-	UPROPERTY()
-	FHitResult HitResult;
-
-	UPROPERTY()
-	bool Shooting = true;
-};
 
 UCLASS(config=Game)
 class AProjectoPruebasSCharacter : public ACharacter
@@ -43,8 +31,11 @@ public:
 	USkeletalMeshComponent* Mesh3P;
 
 	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	USkeletalMeshComponent* FP_Gun;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	TSubclassOf<AWeapon> GunClass_Initial;
+	
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_WeaponChange)
+	AWeapon* FP_Gun;
 
 	/** Location on gun mesh where projectiles should spawn. */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -57,8 +48,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Health)
 	UHealthComponent* HealthComponent;
 
+	/*
 	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
 	FInstantHitInfo OnHitInfo;
+	*/
 	
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -102,31 +95,25 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
 	float AngleLimit;
+
+	bool IslocallyControlledDebug;
+
+private:
+	float InfiValueMove = 0;
 	
 public:
 	AProjectoPruebasSCharacter();
+	
 
 	UFUNCTION(BlueprintCallable)
 	FRotator GetAimView();
 
-	void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
-private:
-	float InfiValueMove = 0;
-
-protected:
-
-	virtual void BeginPlay();
-
-	virtual void Tick(float DeltaSeconds) override;
-	UFUNCTION()
-	void OnRep_HitInfo();
+	virtual void BeginDestroy() override;
 	
-	UFUNCTION(Server,Reliable,WithValidation)
-	void ConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	/** Returns FirstPersonCameraComponent subobject **/
+	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform);
-	
-	/** Fires a projectile. */
 	void OnFire();
 
 	/** Handles moving forward/backward */
@@ -146,8 +133,41 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+	//void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
 
 	void MoveInfiForward(float Val);
+
+protected:
+
+	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaSeconds) override;
+
+	void AttachToCharacter();
+
+	UFUNCTION()
+	void OnRep_WeaponChange();
+
+	void DestroyWeapon();
+
+	
+	/*
+	UFUNCTION()
+	virtual void OnRep_HitInfo();
+
+	
+	UFUNCTION(Server,Reliable,WithValidation)
+	void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+	*/
+
+	//void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform);
+	
+	/** Fires a projectile. */
+	
+
+	UFUNCTION(Server,Unreliable)
+	void ReplicatePitch();
+	
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
@@ -156,14 +176,11 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	void ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform);
-
-public:
-	/** Returns Mesh1P subobject **/
-	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-	/** Returns FirstPersonCameraComponent subobject **/
-	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+//	void ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform);
+	
 
 };
+
+
 
 

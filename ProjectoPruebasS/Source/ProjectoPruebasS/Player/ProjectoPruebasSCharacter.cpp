@@ -51,22 +51,7 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	Mesh3P->SetupAttachment(GetCapsuleComponent());
 	Mesh3P->bOwnerNoSee = true;
 
-
-	// Create a gun mesh component
-	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(false); // otherwise won't be visible in multiplayer
-	FP_Gun->bCastDynamicShadow = false;
-	FP_Gun->CastShadow = false;
-	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
-	FP_Gun->SetupAttachment(RootComponent);
-
-
-	FP_MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));
-	FP_MuzzleLocation->SetupAttachment(FP_Gun);
-	FP_MuzzleLocation->SetRelativeLocation(FVector(0.2f, 48.4f, -10.6f));
-
-	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 0.0f, 10.0f);
+	
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P and FP_Gun
 	// are set in the derived blueprint asset named FirstPersonCharacter to avoid direct content references in C++.
@@ -78,17 +63,17 @@ void AProjectoPruebasSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	if(GetLocalRole() == ROLE_Authority)
+	{
+		
+		FP_Gun  = Cast<AWeapon>(GetWorld()->SpawnActor(GunClass_Initial));
+		FP_Gun->Init(this);
+		AttachToCharacter();
+		
+	}
+
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	if (IsLocallyControlled())
-	{
-		FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
-		                          TEXT("GripPoint"));
-	}
-	else
-	{
-		FP_Gun->AttachToComponent(Mesh3P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
-		                          TEXT("GripPoint"));
-	}
+	
 }
 
 void AProjectoPruebasSCharacter::Tick(float DeltaSeconds)
@@ -100,36 +85,54 @@ void AProjectoPruebasSCharacter::Tick(float DeltaSeconds)
 	}
 }
 
+void AProjectoPruebasSCharacter::AttachToCharacter()
+{
+	if(IsValid(FP_Gun))
+	{
+		FP_Gun->Init(this);
+		IslocallyControlledDebug = IsLocallyControlled();
+		if (IslocallyControlledDebug || GetLocalRole() == ROLE_Authority) 
+		{
+			FP_Gun->FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false),
+									  TEXT("GripPoint"));
+		}
+		else
+		{
+			FP_Gun->FP_Gun2->AttachToComponent(Mesh3P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false),TEXT("GripPoint"));
+		}
+	}
+}
+
+void AProjectoPruebasSCharacter::OnRep_WeaponChange()
+{
+	AttachToCharacter();
+}
+
+void AProjectoPruebasSCharacter::DestroyWeapon()
+{
+	if(FP_Gun->IsValidLowLevel())
+	{
+		FP_Gun->FP_Gun->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+		FP_Gun->FP_Gun2->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+		FP_Gun->SetActorHiddenInGame(true);
+		if(FP_Gun && GetLocalRole() == ROLE_Authority)
+		{
+			FP_Gun->Destroy();
+		}
+	}
+}
+
+
 
 //////////////////////////////////////////////////////////////////////////// Input
 
 void AProjectoPruebasSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-
-	// Bind jump events
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	// Bind fire event
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AProjectoPruebasSCharacter::OnFire);
-
-
-	// Bind movement events
-	PlayerInputComponent->BindAxis("MoveForward", this, &AProjectoPruebasSCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveInfiForward", this, &AProjectoPruebasSCharacter::MoveInfiForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AProjectoPruebasSCharacter::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &AProjectoPruebasSCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &AProjectoPruebasSCharacter::LookUpAtRate);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+/*
 void AProjectoPruebasSCharacter::ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform)
 {
 	FVector BoxExtent = Box.GetExtent();
@@ -146,6 +149,7 @@ void AProjectoPruebasSCharacter::ComputeBoxValidation(FBox Box,FHitResult Impact
 		ProcessHitConfirmed(Impact,RelativeTransform);
 	}
 }
+*/
 
 void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
 {
@@ -164,52 +168,21 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 	return AimRotLS;
 }
 
+void AProjectoPruebasSCharacter::BeginDestroy()
+{
+	DestroyWeapon();
+	Super::BeginDestroy();
+}
+
 void AProjectoPruebasSCharacter::OnFire()
 {
 	if (this->IsLocallyControlled() && GetNetMode() == NM_Client)
 	{
-		FHitResult HitResult;
-		FTransform CameraTrans = FirstPersonCameraComponent->GetComponentTransform();
-		FVector EndPoint = CameraTrans.GetLocation() + (FirstPersonCameraComponent->GetForwardVector() * 10000);
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
-		this->GetWorld()->LineTraceSingleByChannel(HitResult, CameraTrans.GetLocation(), EndPoint,
-		                                           ECC_GameTraceChannel1, Params);
-		if (IsValid(HitResult.GetActor()) && HitResult.GetActor()->GetRemoteRole() == ROLE_Authority)
-		{
-			//We hit a character so where are going to try a precise shoot
-
-			FTransform RelativeTransform;
-			RelativeTransform.SetLocation(UKismetMathLibrary::InverseTransformLocation(
-				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(), HitResult.ImpactPoint));
-			RelativeTransform.SetRotation(UKismetMathLibrary::InverseTransformRotation(
-				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(),
-				HitResult.ImpactNormal.Rotation()).Quaternion());
-			SimulateShoot(HitResult, RelativeTransform);
-			ConfirmHitServer(HitResult, RelativeTransform,Cast<AProjectoPruebasSCharacter>(HitResult.GetActor()));
-		}
-		else
-		{
-			if (HitResult.bBlockingHit)
-			{
-				ConfirmHitServer(HitResult, FTransform::Identity,nullptr);
-			}
-			else
-			{
-				//MissHitServer();
-			}
-		}
-
-		if (bDebug)
-		{
-			DrawDebugLine(GetWorld(), CameraTrans.GetLocation(), HitResult.ImpactPoint, FColor::Red, false, 10);
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 20, 32, FColor::Red, false, 10);
-			if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, HitResult.BoneName.ToString());
-		}
+		FP_Gun->OnFire();
 	}
 }
 
+/*
 void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
 {
 	UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot, FP_Gun,TEXT("Muzzle"), FVector(ForceInit),
@@ -220,6 +193,13 @@ void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult, FTransform 
 		UGameplayStatics::SpawnEmitterAttached(ParticleSystemHit, hitResult.GetActor()->GetRootComponent(), NAME_None,
 		                                       RelativeTransForm.GetLocation(),
 		                                       RelativeTransForm.GetRotation().Rotator(), ScaleShootHit/hitResult.GetActor()->GetRootComponent()->GetComponentScale());
+	} else if(hitResult.bBlockingHit)
+	{
+		FTransform TransformEmitter;
+		TransformEmitter.SetLocation(hitResult.Location);
+		TransformEmitter.SetRotation(hitResult.ImpactNormal.Rotation().Quaternion());
+		TransformEmitter.SetScale3D(ScaleShootHit);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),ParticleSystemHit,TransformEmitter);
 	}
 }
 
@@ -229,12 +209,12 @@ void AProjectoPruebasSCharacter::OnRep_HitInfo()
 }
 
 
-bool AProjectoPruebasSCharacter::ConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
+bool AProjectoPruebasSCharacter::ReConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
 {
 	return true;
 }
 
-void AProjectoPruebasSCharacter::ConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
+void AProjectoPruebasSCharacter::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
 {
 	if(Impact.GetActor() || Impact.bBlockingHit)
 	{
@@ -269,20 +249,21 @@ void AProjectoPruebasSCharacter::ConfirmHitServer_Implementation(FHitResult Impa
 				}
 			}
 		}
+	}else
+	{
+		ProcessHitConfirmed(Impact, FTransform::Identity); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
 	}
 }
 
 void AProjectoPruebasSCharacter::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform)
 {
-	if (IsValid(Impact.GetActor()))
-	{
+	
 		OnHitInfo.HitResult = Impact;
 		OnHitInfo.RelativeTransform = RelativeTransform;
 		OnHitInfo.Shooting = !OnHitInfo.Shooting;
-	}
 }
 
-
+*/
 
 //Commenting this section out to be consistent with FPS BP template.
 //This allows the user to turn without using the right virtual joystick
@@ -344,19 +325,30 @@ void AProjectoPruebasSCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	
+	
 }
 
 void AProjectoPruebasSCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	ReplicatePitch();
+}
+
+void AProjectoPruebasSCharacter::ReplicatePitch_Implementation()
+{
+	FirstPersonCameraComponent->SetWorldRotation(GetViewRotation());
 }
 
 float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
                                              AController* EventInstigator, AActor* DamageCauser)
 {
-	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	HealthComponent->UpdateHealth(-DamageAmount);
+	if(GetLocalRole() == ROLE_Authority)
+	{
+		Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+		HealthComponent->UpdateHealth(-DamageAmount);
+	}
 
 	return DamageAmount;
 }
@@ -364,5 +356,5 @@ float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent co
 void AProjectoPruebasSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME_CONDITION(AProjectoPruebasSCharacter, OnHitInfo, COND_SkipOwner);
+	DOREPLIFETIME(AProjectoPruebasSCharacter, FP_Gun);
 }
