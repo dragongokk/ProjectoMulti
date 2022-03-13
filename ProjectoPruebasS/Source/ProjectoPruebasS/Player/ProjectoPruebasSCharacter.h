@@ -60,10 +60,7 @@ public:
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
-
-	/** Gun muzzle's offset from the characters location */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
-	FVector GunOffset;
+	
 
 	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
@@ -78,23 +75,7 @@ public:
 	UAnimMontage* FireAnimation;
 
 	//Hay que càmbiar despues toda la logica de las pistolas a los bp + hacer controllers
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	UParticleSystem* ParticleSystemShoot;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	UParticleSystem* ParticleSystemHit;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	FVector ScaleShootEffect;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	FVector ScaleShootHit;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	bool bDebug;
-
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
-	float AngleLimit;
+	
 
 	bool IslocallyControlledDebug;
 

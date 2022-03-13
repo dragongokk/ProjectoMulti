@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ProjectoPruebasSCharacter.h"
+
+#include "ProjectPruebasController.h"
 #include "../ProjectoPruebasSProjectile.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -11,6 +13,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "ProjectoPruebasS/ProjectoPruebasSGameMode.h"
+#include "ProjectoPruebasS/TeamsManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -23,11 +27,8 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
 	// set our turn rates for input
-	bDebug = true;
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
-	ScaleShootEffect = FVector(1, 1, 1);
-	ScaleShootHit = FVector(1, 1, 1);
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
@@ -62,6 +63,7 @@ void AProjectoPruebasSCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+	
 
 	if(GetLocalRole() == ROLE_Authority)
 	{
@@ -132,24 +134,6 @@ void AProjectoPruebasSCharacter::SetupPlayerInputComponent(class UInputComponent
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-/*
-void AProjectoPruebasSCharacter::ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform)
-{
-	FVector BoxExtent = Box.GetExtent();
-	FVector BoxCenter = Box.GetCenter();
-
-	BoxExtent.X = UKismetMathLibrary::Max(20.0f,BoxExtent.X);
-	BoxExtent.Y = UKismetMathLibrary::Max(20.0f,BoxExtent.Y);
-	BoxExtent.Z = UKismetMathLibrary::Max(20.0f,BoxExtent.Z);
-
-	if(	FMath::Abs(Impact.Location.X - BoxCenter.X) < BoxExtent.X &&
-		FMath::Abs(Impact.Location.Y - BoxCenter.Y) < BoxExtent.Y &&
-		FMath::Abs(Impact.Location.Z - BoxCenter.Z) < BoxExtent.Z)
-	{
-		ProcessHitConfirmed(Impact,RelativeTransform);
-	}
-}
-*/
 
 void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
 {
@@ -171,6 +155,14 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 void AProjectoPruebasSCharacter::BeginDestroy()
 {
 	DestroyWeapon();
+	if(GetLocalRole() == ROLE_Authority)
+	{
+		AProjectoPruebasSGameMode* MyGamemode =Cast<AProjectoPruebasSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if(MyGamemode)
+		{
+			MyGamemode->TeamsManager->RemoveToTheTeam(Cast<AProjectPruebasController>(this->GetController()));
+		}
+	}
 	Super::BeginDestroy();
 }
 
@@ -181,127 +173,6 @@ void AProjectoPruebasSCharacter::OnFire()
 		FP_Gun->OnFire();
 	}
 }
-
-/*
-void AProjectoPruebasSCharacter::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
-{
-	UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot, FP_Gun,TEXT("Muzzle"), FVector(ForceInit),
-	                                       FRotator::ZeroRotator, ScaleShootEffect);
-	if (hitResult.GetActor())
-
-	{
-		UGameplayStatics::SpawnEmitterAttached(ParticleSystemHit, hitResult.GetActor()->GetRootComponent(), NAME_None,
-		                                       RelativeTransForm.GetLocation(),
-		                                       RelativeTransForm.GetRotation().Rotator(), ScaleShootHit/hitResult.GetActor()->GetRootComponent()->GetComponentScale());
-	} else if(hitResult.bBlockingHit)
-	{
-		FTransform TransformEmitter;
-		TransformEmitter.SetLocation(hitResult.Location);
-		TransformEmitter.SetRotation(hitResult.ImpactNormal.Rotation().Quaternion());
-		TransformEmitter.SetScale3D(ScaleShootHit);
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),ParticleSystemHit,TransformEmitter);
-	}
-}
-
-void AProjectoPruebasSCharacter::OnRep_HitInfo()
-{
-	SimulateShoot(OnHitInfo.HitResult, OnHitInfo.RelativeTransform);
-}
-
-
-bool AProjectoPruebasSCharacter::ReConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
-{
-	return true;
-}
-
-void AProjectoPruebasSCharacter::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform, AProjectoPruebasSCharacter* HitCharacter)
-{
-	if(Impact.GetActor() || Impact.bBlockingHit)
-	{
-		FVector Origin = FP_Gun->GetSocketLocation("Muzzle"); //Posible método para conseguir la localizancion del comienzo del disparo
-		FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
-
-		float viewDot = FVector::DotProduct(GetViewRotation().Vector(),DirVector);
-		if(viewDot > AngleLimit)
-		{
-			if(!(Impact.GetActor()) && Impact.bBlockingHit)
-			{
-				ProcessHitConfirmed(Impact,RelativeTransform);
-			}else if(Impact.GetActor())
-			{
-				if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
-				{
-					ProcessHitConfirmed(Impact,RelativeTransform); //Le damos la razón automaticamente si el objeto es estático
-				}else
-				{
-					if(!(HitCharacter))
-					{
-						const FBox Box = Impact.GetActor()->GetComponentsBoundingBox();
-
-						ComputeBoxValidation(Box,Impact,RelativeTransform);
-							
-					}else
-					{
-						const FBox Box = HitCharacter->Mesh3P->GetBodyInstance(Impact.BoneName)->GetBodyBounds();
-
-						ComputeBoxValidation(Box,Impact,RelativeTransform);
-					}
-				}
-			}
-		}
-	}else
-	{
-		ProcessHitConfirmed(Impact, FTransform::Identity); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
-	}
-}
-
-void AProjectoPruebasSCharacter::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform)
-{
-	
-		OnHitInfo.HitResult = Impact;
-		OnHitInfo.RelativeTransform = RelativeTransform;
-		OnHitInfo.Shooting = !OnHitInfo.Shooting;
-}
-
-*/
-
-//Commenting this section out to be consistent with FPS BP template.
-//This allows the user to turn without using the right virtual joystick
-
-//void AProjectoPruebasSCharacter::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
-//{
-//	if ((TouchItem.bIsPressed == true) && (TouchItem.FingerIndex == FingerIndex))
-//	{
-//		if (TouchItem.bIsPressed)
-//		{
-//			if (GetWorld() != nullptr)
-//			{
-//				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
-//				if (ViewportClient != nullptr)
-//				{
-//					FVector MoveDelta = Location - TouchItem.Location;
-//					FVector2D ScreenSize;
-//					ViewportClient->GetViewportSize(ScreenSize);
-//					FVector2D ScaledDelta = FVector2D(MoveDelta.X, MoveDelta.Y) / ScreenSize;
-//					if (FMath::Abs(ScaledDelta.X) >= 4.0 / ScreenSize.X)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.X * BaseTurnRate;
-//						AddControllerYawInput(Value);
-//					}
-//					if (FMath::Abs(ScaledDelta.Y) >= 4.0 / ScreenSize.Y)
-//					{
-//						TouchItem.bMoved = true;
-//						float Value = ScaledDelta.Y * BaseTurnRate;
-//						AddControllerPitchInput(Value);
-//					}
-//					TouchItem.Location = Location;
-//				}
-//				TouchItem.Location = Location;
-//			}
-//		}
-//	}
-//}
 
 void AProjectoPruebasSCharacter::MoveForward(float Value)
 {

@@ -6,6 +6,7 @@
 
 
 #include "GameFramework/PlayerController.h"
+#include "ProjectoPruebasS/ProjectPruebaLibrary.h"
 #include "ProjectPruebasController.generated.h"
 
 class AProjectoPruebasSCharacter;
@@ -16,6 +17,17 @@ UCLASS()
 class PROJECTOPRUEBASS_API AProjectPruebasController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	ETeam Team;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Pawns)
+	TSubclassOf<AProjectoPruebasSCharacter> ReadTeamPawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Pawns)
+	TSubclassOf<AProjectoPruebasSCharacter> BlueTeamPawn;
+	
 protected:
 	virtual void BeginPlay() override;
 
