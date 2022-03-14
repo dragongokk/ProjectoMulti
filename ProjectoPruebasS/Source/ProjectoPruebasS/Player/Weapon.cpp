@@ -222,7 +222,7 @@ void AWeapon::ComputeBoxValidation(FBox Box, FHitResult Impact, FTransform Relat
 	BoxExtent.X = UKismetMathLibrary::Max(20.0f,BoxExtent.X);
 	BoxExtent.Y = UKismetMathLibrary::Max(20.0f,BoxExtent.Y);
 	BoxExtent.Z = UKismetMathLibrary::Max(20.0f,BoxExtent.Z);
-
+	
 	if(	FMath::Abs(Impact.Location.X - BoxCenter.X) < BoxExtent.X &&
 		FMath::Abs(Impact.Location.Y - BoxCenter.Y) < BoxExtent.Y &&
 		FMath::Abs(Impact.Location.Z - BoxCenter.Z) < BoxExtent.Z)
