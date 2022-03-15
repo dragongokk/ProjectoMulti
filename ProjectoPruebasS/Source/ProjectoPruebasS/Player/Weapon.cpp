@@ -136,8 +136,8 @@ void AWeapon::BeginPlay()
 void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform,
 	AProjectoPruebasSCharacter* HitCharacter)
 {
-	if(OwnerCharacter && HitCharacter && OwnerCharacter->ProjectPruebasController && HitCharacter->ProjectPruebasController &&
-	  (OwnerCharacter->ProjectPruebasController->Team == HitCharacter->ProjectPruebasController->Team))
+	if(OwnerCharacter && HitCharacter && OwnerCharacter->GetMyController() && HitCharacter->GetMyController() &&
+	  (OwnerCharacter->GetMyController()->Team == HitCharacter->GetMyController()->Team))
 	{
 		ProcessHitConfirmed(Impact,RelativeTransform,false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
 	}

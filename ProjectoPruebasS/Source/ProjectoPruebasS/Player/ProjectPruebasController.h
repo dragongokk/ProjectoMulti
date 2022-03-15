@@ -6,6 +6,7 @@
 
 
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerStart.h"
 #include "ProjectoPruebasS/ProjectPruebaLibrary.h"
 #include "ProjectPruebasController.generated.h"
 
@@ -27,6 +28,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Pawns)
 	TSubclassOf<AProjectoPruebasSCharacter> BlueTeamPawn;
+
+	UPROPERTY()
+	APlayerStart* SpawnForThisController;
 	
 protected:
 	virtual void BeginPlay() override;

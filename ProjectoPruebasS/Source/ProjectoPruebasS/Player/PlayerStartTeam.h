@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectoPruebasSCharacter.h"
 #include "ProjectPruebasController.h"
 #include "GameFramework/PlayerStart.h"
 #include "ProjectoPruebasS/ProjectPruebaLibrary.h"
@@ -28,6 +27,5 @@ public:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Mesh)
 	UStaticMeshComponent* BubleLocate;
-	
 	
 };

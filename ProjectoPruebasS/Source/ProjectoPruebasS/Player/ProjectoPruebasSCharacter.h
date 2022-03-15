@@ -74,12 +74,13 @@ public:
 	/** AnimMontage to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UAnimMontage* FireAnimation;
-	
 
+protected:
 	UPROPERTY()
 	AProjectPruebasController* ProjectPruebasController;
-
-	bool IslocallyControlledDebug;
+	
+	UPROPERTY(Transient,ReplicatedUsing = OnRep_DeadOrAlive )
+	bool bDead;
 
 private:
 	float InfiValueMove = 0;
@@ -123,6 +124,13 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
+	AProjectPruebasController* GetMyController();
+
+	bool IsDead();
+
+	UFUNCTION()
+	void OnZeroHealthFunction();
+
 protected:
 
 	virtual void BeginPlay();
@@ -134,7 +142,12 @@ protected:
 	UFUNCTION()
 	void OnRep_WeaponChange();
 
+	UFUNCTION()
+	void OnRep_DeadOrAlive();
+
 	void DestroyWeapon();
+
+	
 
 	
 	/*
@@ -153,6 +166,7 @@ protected:
 
 	UFUNCTION(Server,Unreliable)
 	void ReplicatePitch();
+	
 	
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;

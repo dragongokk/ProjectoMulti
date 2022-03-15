@@ -39,6 +39,8 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	this->AddOwnedComponent(HealthComponent);
 	HealthComponent->SetIsReplicated(true);
 
+	HealthComponent->OnZeroHealth.AddDynamic(this,&AProjectoPruebasSCharacter::OnZeroHealthFunction);
+
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
@@ -63,14 +65,14 @@ void AProjectoPruebasSCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-	
+
+	bDead = false;
 
 	if(GetLocalRole() == ROLE_Authority)
 	{
 		FP_Gun  = Cast<AWeapon>(GetWorld()->SpawnActor(GunClass_Initial));
 		FP_Gun->Init(this);
 		AttachToCharacter();
-		
 		
 	}
 
@@ -92,8 +94,7 @@ void AProjectoPruebasSCharacter::AttachToCharacter()
 	if(IsValid(FP_Gun))
 	{
 		FP_Gun->Init(this);
-		IslocallyControlledDebug = IsLocallyControlled();
-		if (IslocallyControlledDebug || GetLocalRole() == ROLE_Authority) 
+		if (IsLocallyControlled() || GetLocalRole() == ROLE_Authority) 
 		{
 			FP_Gun->FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false),
 									  TEXT("GripPoint"));
@@ -108,6 +109,11 @@ void AProjectoPruebasSCharacter::AttachToCharacter()
 void AProjectoPruebasSCharacter::OnRep_WeaponChange()
 {
 	AttachToCharacter();
+}
+
+void AProjectoPruebasSCharacter::OnRep_DeadOrAlive()
+{
+	
 }
 
 void AProjectoPruebasSCharacter::DestroyWeapon()
@@ -147,6 +153,25 @@ void AProjectoPruebasSCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	ProjectPruebasController = Cast<AProjectPruebasController>(NewController);
+}
+
+AProjectPruebasController* AProjectoPruebasSCharacter::GetMyController()
+{
+	return ProjectPruebasController;
+}
+
+bool AProjectoPruebasSCharacter::IsDead()
+{
+	return bDead;
+}
+
+void AProjectoPruebasSCharacter::OnZeroHealthFunction()
+{
+	if(GetLocalRole() == ROLE_Authority) //En principio esta función debería ejecutarse si o si en servidor pero por si acaso lo compruebo
+	{
+		this->SetActorLocation(ProjectPruebasController->SpawnForThisController->GetActorLocation(),true,nullptr,ETeleportType::TeleportPhysics);
+		HealthComponent->ResetHealth();
+	}
 }
 
 FRotator AProjectoPruebasSCharacter::GetAimView()

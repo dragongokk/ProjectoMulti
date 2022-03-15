@@ -29,7 +29,9 @@ void UHealthComponent::UpdateHealth(float Amount)
 		}if(tempHealth <= 0)
 		{
 			//Ded
+			
 			CurrentHealth = 0;
+			OnZeroHealth.Broadcast();
 			return;
 		}
 		CurrentHealth +=Amount;
@@ -64,6 +66,16 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+float UHealthComponent::GetHealth()
+{
+	return CurrentHealth;
+}
+
+void UHealthComponent::ResetHealth()
+{
+	CurrentHealth = MaxHealth;
 }
 
 void UHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

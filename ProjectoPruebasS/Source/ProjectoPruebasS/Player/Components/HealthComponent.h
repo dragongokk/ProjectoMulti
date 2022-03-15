@@ -27,25 +27,32 @@ public:
 	UPROPERTY(Replicated,EditAnywhere,BlueprintReadWrite,Category = Config)
 	float MaxHealth;
 
+protected:
 	UPROPERTY(Transient,ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;
 
 public:	
 	// Sets default values for this component's properties
 	UHealthComponent();
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	float GetHealth();
+
+	void ResetHealth();
 
 	void UpdateHealth(float Amount);
-
-	UFUNCTION()
-	void OnRep_CurrentHealth();
+	
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION()
+	void OnRep_CurrentHealth();
+
+
 
 		
 };

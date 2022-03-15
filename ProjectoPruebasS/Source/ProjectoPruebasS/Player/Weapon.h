@@ -34,9 +34,7 @@ public:
 	
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* FP_Gun2;
-
-	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
-	FInstantHitInfo OnHitInfo;
+	
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
 	UParticleSystem* ParticleSystemShoot;
@@ -62,6 +60,9 @@ public:
 protected:
 	UPROPERTY(Transient)
 	AProjectoPruebasSCharacter* OwnerCharacter;
+
+	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
+	FInstantHitInfo OnHitInfo;
 
 	
 	

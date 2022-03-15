@@ -43,6 +43,7 @@ AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* P
 			if(IsValid(Spawn) && IsValid(Spawn->GetCapsuleComponent()) && Spawn->ControllerOwningThisStart == nullptr && Spawn->Team == MyController->Team)
 			{
 				Spawn->ControllerOwningThisStart = MyController;
+				MyController->SpawnForThisController = Spawn;
 				return  Spawn;
 			}
 		}
