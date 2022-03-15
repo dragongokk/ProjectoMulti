@@ -87,7 +87,7 @@ protected:
 	UFUNCTION(server,reliable,WithValidation)
 	void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
 	
-	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform);
+	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform, bool bDamage);
 
 	void ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform);
 	

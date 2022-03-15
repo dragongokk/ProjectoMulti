@@ -7,4 +7,6 @@ APlayerStartTeam::APlayerStartTeam(const FObjectInitializer& ObjectInitializer):
 {
 	BubleLocate = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Buble"));
 	BubleLocate->SetupAttachment(RootComponent);
+	BubleLocate->SetHiddenInGame(true);
+	BubleLocate->SetCollisionProfileName("NoCollision");
 }

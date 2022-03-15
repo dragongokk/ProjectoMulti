@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "ProjectoPruebasSCharacter.generated.h"
 
+class AProjectPruebasController;
 class AProjectoPruebasSCharacter;
 class UHealthComponent;
 class UInputComponent;
@@ -73,14 +74,16 @@ public:
 	/** AnimMontage to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UAnimMontage* FireAnimation;
-
-	//Hay que càmbiar despues toda la logica de las pistolas a los bp + hacer controllers
 	
+
+	UPROPERTY()
+	AProjectPruebasController* ProjectPruebasController;
 
 	bool IslocallyControlledDebug;
 
 private:
 	float InfiValueMove = 0;
+
 	
 public:
 	AProjectoPruebasSCharacter();
@@ -117,6 +120,8 @@ public:
 	//void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
 
 	void MoveInfiForward(float Val);
+
+	virtual void PossessedBy(AController* NewController) override;
 
 protected:
 

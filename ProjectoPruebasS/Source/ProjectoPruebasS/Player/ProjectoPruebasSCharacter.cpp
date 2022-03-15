@@ -67,10 +67,10 @@ void AProjectoPruebasSCharacter::BeginPlay()
 
 	if(GetLocalRole() == ROLE_Authority)
 	{
-		
 		FP_Gun  = Cast<AWeapon>(GetWorld()->SpawnActor(GunClass_Initial));
 		FP_Gun->Init(this);
 		AttachToCharacter();
+		
 		
 	}
 
@@ -143,6 +143,12 @@ void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
 	}
 }
 
+void AProjectoPruebasSCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	ProjectPruebasController = Cast<AProjectPruebasController>(NewController);
+}
+
 FRotator AProjectoPruebasSCharacter::GetAimView()
 {
 	const FVector AimDirWS = GetBaseAimRotation().Vector();
@@ -165,6 +171,8 @@ void AProjectoPruebasSCharacter::BeginDestroy()
 	}
 	Super::BeginDestroy();
 }
+
+
 
 void AProjectoPruebasSCharacter::OnFire()
 {

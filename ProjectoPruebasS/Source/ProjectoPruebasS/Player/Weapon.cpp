@@ -5,6 +5,7 @@
 
 #include "HistoryManager.h"
 #include "ProjectoPruebasSCharacter.h"
+#include "ProjectPruebasController.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -135,10 +136,14 @@ void AWeapon::BeginPlay()
 void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform,
 	AProjectoPruebasSCharacter* HitCharacter)
 {
-	
-	if(OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
+	if(OwnerCharacter && HitCharacter && OwnerCharacter->ProjectPruebasController && HitCharacter->ProjectPruebasController &&
+	  (OwnerCharacter->ProjectPruebasController->Team == HitCharacter->ProjectPruebasController->Team))
 	{
-		FVector Origin = FP_Gun->GetSocketLocation("Muzzle"); //Posible método para conseguir la localizancion del comienzo del disparo
+		ProcessHitConfirmed(Impact,RelativeTransform,false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
+	}
+	else if(OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
+	{
+		FVector Origin = OwnerCharacter->FirstPersonCameraComponent->GetComponentLocation(); //Pienso que es mejor tener en cuenta que el disparo realmente se esta realizando desde la camara
 		FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
 
 		float viewDot = FVector::DotProduct(OwnerCharacter->GetViewRotation().Vector(),DirVector);
@@ -147,16 +152,16 @@ void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform Re
 			if(GEngine)
 				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Origin.ToString());
 		}
-		if(viewDot > AngleLimit)
+		if(viewDot > AngleLimit ) //Vemos si hay demasiado desync (LAG)
 		{
 			if(!(Impact.GetActor()) && Impact.bBlockingHit)
 			{
-				ProcessHitConfirmed(Impact,RelativeTransform);
+				ProcessHitConfirmed(Impact,RelativeTransform,true);
 			}else if(Impact.GetActor())
 			{
 				if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
 				{
-					ProcessHitConfirmed(Impact,RelativeTransform); //Le damos la razón automaticamente si el objeto es estático
+					ProcessHitConfirmed(Impact,RelativeTransform,true); //Le damos la razón automaticamente si el objeto es estático
 				}else
 				{
 					if(!(HitCharacter))
@@ -176,7 +181,7 @@ void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform Re
 		}
 	}else
 	{
-		ProcessHitConfirmed(Impact, FTransform::Identity); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
+		ProcessHitConfirmed(Impact, FTransform::Identity, false); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
 	}
 }
 
@@ -186,7 +191,7 @@ bool AWeapon::ReConfirmHitServer_Validate(FHitResult Impact, FTransform Relative
 	return true;
 }
 
-void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform)
+void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform,  bool bDamage)
 {
 	if(GetLocalRole() == ROLE_Authority)
 	{
@@ -194,7 +199,7 @@ void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransfor
 		OnHitInfo.RelativeTransform = RelativeTransform;
 		OnHitInfo.Shooting = !OnHitInfo.Shooting;
 
-		if(Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
+		if(bDamage && Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
 		{
 			UProjectPruebasGameInstance* MyGameInstance = Cast<UProjectPruebasGameInstance>(GetGameInstance());
 			if(MyGameInstance)
@@ -227,7 +232,7 @@ void AWeapon::ComputeBoxValidation(FBox Box, FHitResult Impact, FTransform Relat
 		FMath::Abs(Impact.Location.Y - BoxCenter.Y) < BoxExtent.Y &&
 		FMath::Abs(Impact.Location.Z - BoxCenter.Z) < BoxExtent.Z)
 	{
-		ProcessHitConfirmed(Impact,RelativeTransform);
+		ProcessHitConfirmed(Impact,RelativeTransform,true);
 	}
 }
 
