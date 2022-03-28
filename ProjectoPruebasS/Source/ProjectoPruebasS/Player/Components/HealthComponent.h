@@ -27,6 +27,9 @@ public:
 	UPROPERTY(Replicated,EditAnywhere,BlueprintReadWrite,Category = Config)
 	float MaxHealth;
 
+	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = Debug)
+	bool bDebug;
+
 protected:
 	UPROPERTY(Transient,ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;

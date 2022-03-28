@@ -12,12 +12,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
 #include "ProjectoPruebasS/DataTables/Data.h"
+#include "ProjectoPruebasS/UI/DisplayHud.h"
+#include "ProjectoPruebasS/UI/ProyectPruebasHud.h"
 
 // Sets default values
 AWeapon::AWeapon()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gun"));
 	RootComponent = FP_Gun;
 	FP_Gun->bOnlyOwnerSee = true; // otherwise won't be visible in multiplayer
@@ -42,9 +44,9 @@ void AWeapon::Init(AProjectoPruebasSCharacter* Character)
 		OwnerCharacter = Character;
 		SetInstigator(Character);
 		SetOwner(Character);
+		MyController= Cast<AProjectPruebasController>(OwnerCharacter->GetController());
 		// For Rpc Calls
 	}
-	
 }
 
 AProjectoPruebasSCharacter* AWeapon::GetOwner()
@@ -81,7 +83,7 @@ void AWeapon::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
 
 void AWeapon::OnFire()
 {
-	if (OwnerCharacter && OwnerCharacter->IsLocallyControlled() && GetNetMode() == NM_Client )
+	if (OwnerCharacter && OwnerCharacter->IsLocallyControlled() && GetNetMode() == NM_Client && Ammo > 0)
 	{
 		FHitResult HitResult;
 		FTransform CameraTrans = OwnerCharacter->FirstPersonCameraComponent->GetComponentTransform();
@@ -125,68 +127,86 @@ void AWeapon::OnFire()
 	}
 }
 
+void AWeapon::Reload()
+{
+	ReloadServer();
+}
+
 
 // Called when the game starts or when spawned
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Ammo = MaxAmmo;
 }
 
 void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform,
 	AProjectoPruebasSCharacter* HitCharacter)
 {
-	if(OwnerCharacter && HitCharacter && OwnerCharacter->GetMyController() && HitCharacter->GetMyController() &&
-	  (OwnerCharacter->GetMyController()->Team == HitCharacter->GetMyController()->Team))
+	if(Ammo > 0)
 	{
-		ProcessHitConfirmed(Impact,RelativeTransform,false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
-	}
-	else if(OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
-	{
-		FVector Origin = OwnerCharacter->FirstPersonCameraComponent->GetComponentLocation(); //Pienso que es mejor tener en cuenta que el disparo realmente se esta realizando desde la camara
-		FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
-
-		float viewDot = FVector::DotProduct(OwnerCharacter->GetViewRotation().Vector(),DirVector);
-		if(bDebug)
+		if(OwnerCharacter && HitCharacter && OwnerCharacter->GetMyController() && HitCharacter->GetMyController() &&
+		  (OwnerCharacter->GetMyController()->Team == HitCharacter->GetMyController()->Team))
 		{
-			if(GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Origin.ToString());
+			ProcessHitConfirmed(Impact,RelativeTransform,false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
 		}
-		if(viewDot > AngleLimit ) //Vemos si hay demasiado desync (LAG)
+		else if(OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
 		{
-			if(!(Impact.GetActor()) && Impact.bBlockingHit)
-			{
-				ProcessHitConfirmed(Impact,RelativeTransform,true);
-			}else if(Impact.GetActor())
-			{
-				if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
-				{
-					ProcessHitConfirmed(Impact,RelativeTransform,true); //Le damos la razón automaticamente si el objeto es estático
-				}else
-				{
-					if(!(HitCharacter))
-					{
-						const FBox Box = Impact.GetActor()->GetComponentsBoundingBox();
+			FVector Origin = OwnerCharacter->FirstPersonCameraComponent->GetComponentLocation(); //Pienso que es mejor tener en cuenta que el disparo realmente se esta realizando desde la camara
+			FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
 
-						ComputeBoxValidation(Box,Impact,RelativeTransform);
-							
+			float viewDot = FVector::DotProduct(OwnerCharacter->GetViewRotation().Vector(),DirVector);
+			if(bDebug)
+			{
+				if(GEngine)
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Origin.ToString());
+			}
+			if(viewDot > AngleLimit ) //Vemos si hay demasiado desync (LAG)
+				{
+				if(!(Impact.GetActor()) && Impact.bBlockingHit)
+				{
+					ProcessHitConfirmed(Impact,RelativeTransform,true);
+				}else if(Impact.GetActor())
+				{
+					if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
+					{
+						ProcessHitConfirmed(Impact,RelativeTransform,true); //Le damos la razón automaticamente si el objeto es estático
 					}else
 					{
-						const FBox Box = HitCharacter->Mesh3P->GetBodyInstance(Impact.BoneName)->GetBodyBounds();
+						if(!(HitCharacter))
+						{
+							const FBox Box = Impact.GetActor()->GetComponentsBoundingBox();
 
-						ComputeBoxValidation(Box,Impact,RelativeTransform);
+							ComputeBoxValidation(Box,Impact,RelativeTransform);
+							
+						}else
+						{
+							const FBox Box = HitCharacter->Mesh3P->GetBodyInstance(Impact.BoneName)->GetBodyBounds();
+
+							ComputeBoxValidation(Box,Impact,RelativeTransform);
+						}
 					}
 				}
-			}
+				}
+		}else
+		{
+			ProcessHitConfirmed(Impact, FTransform::Identity, false); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
 		}
-	}else
-	{
-		ProcessHitConfirmed(Impact, FTransform::Identity, false); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
 	}
 }
 
 bool AWeapon::ReConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform,
 	AProjectoPruebasSCharacter* HitCharacter)
+{
+	return true;
+}
+
+void AWeapon::ReloadServer_Implementation()
+{
+	Ammo = MaxAmmo;
+}
+
+bool AWeapon::ReloadServer_Validate()
 {
 	return true;
 }
@@ -198,6 +218,7 @@ void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransfor
 		OnHitInfo.HitResult = Impact;
 		OnHitInfo.RelativeTransform = RelativeTransform;
 		OnHitInfo.Shooting = !OnHitInfo.Shooting;
+		Ammo = Ammo-1;
 
 		if(bDamage && Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
 		{
@@ -241,6 +262,7 @@ void AWeapon::OnRep_HitInfo()
 	SimulateShoot(OnHitInfo.HitResult, OnHitInfo.RelativeTransform);
 }
 
+
 // Called every frame
 void AWeapon::Tick(float DeltaTime)
 {
@@ -252,5 +274,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AWeapon, OnHitInfo, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(AWeapon, Ammo, COND_OwnerOnly);
 }
 

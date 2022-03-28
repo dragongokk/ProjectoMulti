@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "ProyectPruebasHud.generated.h"
 
+class UDisplayHud;
 /**
  * 
  */
@@ -21,7 +22,19 @@ public:
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;
 
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "HUD")
+	TSubclassOf<UUserWidget> DisplayHudClass;
 
+	UPROPERTY()
+	UDisplayHud* DisplayHud;
+	
+protected:
+
+	virtual void BeginPlay() override;
+
+	
+	
 private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;

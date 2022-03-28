@@ -4,6 +4,7 @@
 #include "ProjectPruebasController.h"
 
 #include "ProjectoPruebasSCharacter.h"
+#include "ProjectoPruebasS/UI/ProyectPruebasHud.h"
 
 void AProjectPruebasController::BeginPlay()
 {
@@ -20,6 +21,7 @@ void AProjectPruebasController::SetupInputComponent()
 
 	// Bind fire event
 	InputComponent->BindAction("Fire", IE_Pressed, this, &AProjectPruebasController::OnFire);
+	InputComponent->BindAction("Reload", IE_Pressed, this, &AProjectPruebasController::Reload);
 
 
 	// Bind movement events
@@ -116,5 +118,13 @@ void AProjectPruebasController::AddControllerPitchInput(float X)
 	if(MainCharacter)
 	{
 		MainCharacter->AddControllerPitchInput(X);
+	}
+}
+
+void AProjectPruebasController::Reload()
+{
+	if(MainCharacter)
+	{
+		MainCharacter->Reload();
 	}
 }

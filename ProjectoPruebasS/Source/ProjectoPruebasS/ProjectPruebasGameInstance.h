@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "ProjectPruebasGameInstance.generated.h"
 
+class AProjectoPruebasSCharacter;
 class UData;
 class UDataTable;
 /**
@@ -24,6 +25,13 @@ public:
 	UPROPERTY()
 	UData* Data;
 
+private:
+
+	UPROPERTY() // El servidor tendra el character que es el controlador 0 por lo tanto no vale para localzar el character en el servidor ( no hay)
+	AProjectoPruebasSCharacter* YourCharacter;
+
 public:
 	virtual void Init() override;
+
+	virtual AProjectoPruebasSCharacter* GetYourCharacter();
 };

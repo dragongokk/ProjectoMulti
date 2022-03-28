@@ -10,6 +10,7 @@
 #include "ProjectoPruebasS/ProjectPruebaLibrary.h"
 #include "ProjectPruebasController.generated.h"
 
+class AProyectPruebasHud;
 class AProjectoPruebasSCharacter;
 /**
  * 
@@ -31,6 +32,7 @@ public:
 
 	UPROPERTY()
 	APlayerStart* SpawnForThisController;
+
 	
 protected:
 	virtual void BeginPlay() override;
@@ -54,6 +56,8 @@ protected:
 	void AddControllerYawInput(float X);
 	
 	void AddControllerPitchInput(float X);
+
+	void Reload();
 	
 	virtual void SetupInputComponent() override;
 

@@ -13,6 +13,7 @@ UHealthComponent::UHealthComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 	//Ver despues si es necesario la replicacion
 	// ...
+	bDebug = false;
 }
 
 
@@ -45,8 +46,11 @@ void UHealthComponent::OnRep_CurrentHealth()
 	{
 		OnHealthUpdate.Broadcast(CurrentHealth);
 	}
-	if(GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::SanitizeFloat(CurrentHealth));  
+	if(bDebug)
+	{
+		if(GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::SanitizeFloat(CurrentHealth));
+	}
 }
 
 

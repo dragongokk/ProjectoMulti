@@ -20,6 +20,7 @@ AProjectoPruebasSGameMode::AProjectoPruebasSGameMode()
 
 	HUDClass = AProyectPruebasHud::StaticClass();
 	
+	
 }
 
 void AProjectoPruebasSGameMode::PostInitializeComponents()
@@ -40,7 +41,7 @@ AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* P
 		for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
 		{
 			APlayerStartTeam* Spawn = Cast<APlayerStartTeam>(*It);
-			if(IsValid(Spawn) && IsValid(Spawn->GetCapsuleComponent()) && Spawn->ControllerOwningThisStart == nullptr && Spawn->Team == MyController->Team)
+			if(IsValid(Spawn) && IsValid(Spawn->GetCapsuleComponent()) && Spawn->ControllerOwningThisStart == nullptr && Spawn->Team == MyController->Team && MyController->SpawnForThisController == nullptr)
 			{
 				Spawn->ControllerOwningThisStart = MyController;
 				MyController->SpawnForThisController = Spawn;
@@ -48,7 +49,8 @@ AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* P
 			}
 		}
 	}
-	return Super::FindPlayerStart_Implementation(Player, IncomingName);
+//	return Super::FindPlayerStart_Implementation(Player, IncomingName);
+	return nullptr;
 }
 
 UClass* AProjectoPruebasSGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)

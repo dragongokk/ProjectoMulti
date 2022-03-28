@@ -130,6 +130,8 @@ public:
 
 	UFUNCTION()
 	void OnZeroHealthFunction();
+	
+	void Reload();
 
 protected:
 

@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+class AProjectPruebasController;
 USTRUCT()
 struct FInstantHitInfo
 {
@@ -57,9 +58,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float WeaponDamage;
 
+	UPROPERTY(Replicated,Transient)
+	int Ammo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int MaxAmmo;
+
 protected:
+
+	FTimerHandle TimerPrueba;
+	
 	UPROPERTY(Transient)
 	AProjectoPruebasSCharacter* OwnerCharacter;
+
+	UPROPERTY(Transient)
+	AProjectPruebasController* MyController;
 
 	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
 	FInstantHitInfo OnHitInfo;
@@ -77,8 +90,8 @@ public:
 	void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
 
 	virtual void OnFire();
-
 	
+	void Reload();
 
 protected:
 	// Called when the game starts or when spawned
@@ -87,6 +100,9 @@ protected:
 	
 	UFUNCTION(server,reliable,WithValidation)
 	void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+
+	UFUNCTION(Server,Reliable, WithValidation)
+	void ReloadServer();
 	
 	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform, bool bDamage);
 
@@ -94,6 +110,8 @@ protected:
 	
 	UFUNCTION()
 	virtual void OnRep_HitInfo();
+
+
 
 public:	
 	// Called every frame

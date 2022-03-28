@@ -4,6 +4,8 @@
 #include "ProjectPruebasGameInstance.h"
 
 #include "DataTables/Data.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/ProjectoPruebasSCharacter.h"
 
 void UProjectPruebasGameInstance::Init()
 {
@@ -15,4 +17,13 @@ void UProjectPruebasGameInstance::Init()
 		Data->Init(GetWorld());
 	}
 	
+}
+
+AProjectoPruebasSCharacter* UProjectPruebasGameInstance::GetYourCharacter()
+{
+	if(!IsValid(YourCharacter))
+	{
+		YourCharacter = Cast<AProjectoPruebasSCharacter>(UGameplayStatics::GetPlayerCharacter(this,0));
+	}
+	return YourCharacter;
 }

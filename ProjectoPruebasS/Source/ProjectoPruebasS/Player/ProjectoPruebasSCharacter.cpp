@@ -53,6 +53,7 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	Mesh3P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh3P"));
 	Mesh3P->SetupAttachment(GetCapsuleComponent());
 	Mesh3P->bOwnerNoSee = true;
+	
 
 	
 
@@ -75,6 +76,8 @@ void AProjectoPruebasSCharacter::BeginPlay()
 		AttachToCharacter();
 		
 	}
+
+	
 
 	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
 	
@@ -171,6 +174,14 @@ void AProjectoPruebasSCharacter::OnZeroHealthFunction()
 	{
 		this->SetActorLocation(ProjectPruebasController->SpawnForThisController->GetActorLocation(),true,nullptr,ETeleportType::TeleportPhysics);
 		HealthComponent->ResetHealth();
+	}
+}
+
+void AProjectoPruebasSCharacter::Reload()
+{
+	if(FP_Gun)
+	{
+		FP_Gun->Reload();
 	}
 }
 
