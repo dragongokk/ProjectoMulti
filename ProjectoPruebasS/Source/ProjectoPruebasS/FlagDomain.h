@@ -21,7 +21,38 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	UStaticMeshComponent* MeshFlag;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Score)
+	float Score;
+
+	//Tiempo que tarda de llegar de 0 a 100 con una persona, no tiene en cuenta si esta en el negativo o las demas personas, en segundos
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Config) 
+	float TimeUp;
 	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Config) 
+	float TimePerTickFlag;
+	
+	float NumberBlueGuys;
+	
+	float NumberRedGuys;
+
+protected:
+	UPROPERTY(Transient)
+	TArray<UMaterialInstanceDynamic*> InstanceMaterialsDyn;
+
+
+private:
+	const int MAxFlagScore = 100;
+
+	float VelocityPerPerson;
+
+	float TimePassed;
+
+	UPROPERTY(Replicated)
+	bool bNeutral;
+
+	float previousScore;
+
 
 public:	
 	// Sets default values for this actor's properties
@@ -30,9 +61,25 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UFUNCTION()
+	virtual void OnRep_Score();
+
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+	virtual void OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,bool bFromSweep, const FHitResult& SweepResult);
+	
+	void SetMeshColor(FColor Color);
+
+	UFUNCTION()
+	virtual void OnCapsuleEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	
+
 };
+
+

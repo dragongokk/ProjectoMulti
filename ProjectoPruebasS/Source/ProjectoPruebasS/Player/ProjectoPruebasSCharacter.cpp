@@ -156,6 +156,10 @@ void AProjectoPruebasSCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	ProjectPruebasController = Cast<AProjectPruebasController>(NewController);
+	if(ProjectPruebasController)
+	{
+		Team = ProjectPruebasController->Team;
+	}
 }
 
 AProjectPruebasController* AProjectoPruebasSCharacter::GetMyController()

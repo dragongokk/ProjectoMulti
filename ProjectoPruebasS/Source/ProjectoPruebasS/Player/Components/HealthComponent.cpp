@@ -4,6 +4,7 @@
 #include "HealthComponent.h"
 
 #include "Net/UnrealNetwork.h"
+#include "ProjectoPruebasS/Player/ProjectoPruebasSCharacter.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -14,6 +15,7 @@ UHealthComponent::UHealthComponent()
 	//Ver despues si es necesario la replicacion
 	// ...
 	bDebug = false;
+	
 }
 
 
@@ -32,7 +34,10 @@ void UHealthComponent::UpdateHealth(float Amount)
 			//Ded
 			
 			CurrentHealth = 0;
-			OnZeroHealth.Broadcast();
+			if(OwnerCharacter)
+			{
+				OnZeroHealth.Broadcast();
+			}
 			return;
 		}
 		CurrentHealth +=Amount;
@@ -59,6 +64,7 @@ void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
     CurrentHealth = MaxHealth;
+	OwnerCharacter = Cast<AProjectoPruebasSCharacter>(GetOwner());
 	// ...
 	
 }

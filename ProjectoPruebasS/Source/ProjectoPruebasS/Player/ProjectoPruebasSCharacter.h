@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Weapon.h"
 #include "GameFramework/Character.h"
+#include "ProjectoPruebasS/ProjectPruebaLibrary.h"
 #include "ProjectoPruebasSCharacter.generated.h"
 
 class AProjectPruebasController;
@@ -74,6 +75,9 @@ public:
 	/** AnimMontage to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	UAnimMontage* FireAnimation;
+
+	UPROPERTY()
+	ETeam Team;
 
 protected:
 	UPROPERTY()

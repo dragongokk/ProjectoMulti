@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
 #include "HealthComponent.generated.h"
 
+class AProjectoPruebasSCharacter;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthUpdate,float, CurrentHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnZeroHealth);
 
@@ -33,6 +35,9 @@ public:
 protected:
 	UPROPERTY(Transient,ReplicatedUsing=OnRep_CurrentHealth)
 	float CurrentHealth;
+
+	UPROPERTY(Transient)
+	AProjectoPruebasSCharacter* OwnerCharacter;
 
 public:	
 	// Sets default values for this component's properties
