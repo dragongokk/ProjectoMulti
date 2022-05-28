@@ -3,7 +3,9 @@
 
 #include "FlagDomain.h"
 
+#include "ProjectoPruebasSGameMode.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Player/ProjectoPruebasSCharacter.h"
 
@@ -30,6 +32,14 @@ AFlagDomain::AFlagDomain()
 void AFlagDomain::BeginPlay()
 {
 	Super::BeginPlay();
+	if((GetNetMode() == NM_DedicatedServer || GetLocalRole() == ROLE_Authority) && IsValid(GetWorld()))
+	{
+		AProjectoPruebasSGameMode* MyGamemode = Cast<AProjectoPruebasSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		if(IsValid(MyGamemode))
+		{
+			MyGamemode->Flags.AddUnique(this);
+		}
+	}
 	VelocityPerPerson = MAxFlagScore / TimeUp;
 	if(GetNetMode() == NM_Client)
 	{
@@ -93,6 +103,7 @@ void AFlagDomain::Tick(float DeltaTime)
 	}
 	
 }
+
 
 void AFlagDomain::OnCapsuleEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {

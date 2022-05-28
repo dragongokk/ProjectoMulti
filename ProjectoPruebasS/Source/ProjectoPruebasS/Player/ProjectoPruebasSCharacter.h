@@ -33,7 +33,7 @@ public:
 	USkeletalMeshComponent* Mesh3P;
 
 	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Weapon)
+	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, Category = Weapon)
 	TSubclassOf<AWeapon> GunClass_Initial;
 	
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_WeaponChange)

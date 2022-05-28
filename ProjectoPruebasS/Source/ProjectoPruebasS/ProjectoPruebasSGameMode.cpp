@@ -3,6 +3,8 @@
 #include "ProjectoPruebasSGameMode.h"
 
 #include "EngineUtils.h"
+#include "FlagDomain.h"
+#include "GameStateProyectoPruebas.h"
 #include "TeamsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerStart.h"
@@ -30,6 +32,7 @@ void AProjectoPruebasSGameMode::PostInitializeComponents()
 		TeamsManager = NewObject<UTeamsManager>();
 	}
 	Super::PostInitializeComponents();
+	GetWorldTimerManager().SetTimer(AddScoreTimer, this, &AProjectoPruebasSGameMode::AddScore, 1, true);
 }
 
 AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
@@ -67,4 +70,34 @@ UClass* AProjectoPruebasSGameMode::GetDefaultPawnClassForController_Implementati
 		}
 	}
 	return Super::GetDefaultPawnClassForController_Implementation(InController);
+}
+
+void AProjectoPruebasSGameMode::AddScore()
+{
+	if(!IsValid(MyGameState))
+	{
+		if(IsValid(GetWorld()))
+		{
+			MyGameState = Cast<AGameStateProyectoPruebas>(GetWorld()->GetGameState());
+		}
+	}
+	if(IsValid(MyGameState))
+	{
+		for (int i = 0; i < Flags.Num(); ++i)
+		{
+			if(IsValid(Flags[i]))
+			{
+				if(!(Flags[i]->bNeutral))
+				{
+					if(Flags[i]->Score > 0)
+					{
+						MyGameState->ScoreRed += 1;
+					}else if(Flags[i]->Score < 0)
+					{
+						MyGameState->ScoreBlue += 1;
+					}
+				}
+			}
+		}
+	}
 }

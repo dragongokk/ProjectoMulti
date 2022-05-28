@@ -2,8 +2,6 @@
 
 
 #include "Weapon.h"
-
-#include "HistoryManager.h"
 #include "ProjectoPruebasSCharacter.h"
 #include "ProjectPruebasController.h"
 #include "Camera/CameraComponent.h"
@@ -13,7 +11,6 @@
 #include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
 #include "ProjectoPruebasS/DataTables/Data.h"
 #include "ProjectoPruebasS/UI/DisplayHud.h"
-#include "ProjectoPruebasS/UI/ProyectPruebasHud.h"
 
 // Sets default values
 AWeapon::AWeapon()

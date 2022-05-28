@@ -4,9 +4,13 @@
 
 #include "CoreMinimal.h"
 
+
+
 #include "GameFramework/GameModeBase.h"
 #include "ProjectoPruebasSGameMode.generated.h"
 
+class AFlagDomain;
+class AGameStateProyectoPruebas;
 class UTeamsManager;
 UCLASS(minimalapi)
 class AProjectoPruebasSGameMode : public AGameModeBase
@@ -16,6 +20,16 @@ class AProjectoPruebasSGameMode : public AGameModeBase
 public:
 	UPROPERTY(NoClear,Transient)
 	UTeamsManager* TeamsManager;
+
+	UPROPERTY()
+	TArray<AFlagDomain*> Flags;
+	
+private:
+	UPROPERTY()
+	AGameStateProyectoPruebas* MyGameState;
+
+	FTimerHandle AddScoreTimer;
+
 	
 public:
 	AProjectoPruebasSGameMode();
@@ -23,6 +37,9 @@ public:
 	
 	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName = TEXT("")) override;
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+
+	void AddScore();
+
 };
 
 

@@ -35,6 +35,10 @@ public:
 	float NumberBlueGuys;
 	
 	float NumberRedGuys;
+	
+	UPROPERTY(Replicated)
+	bool bNeutral;
+	
 
 protected:
 	UPROPERTY(Transient)
@@ -47,10 +51,7 @@ private:
 	float VelocityPerPerson;
 
 	float TimePassed;
-
-	UPROPERTY(Replicated)
-	bool bNeutral;
-
+	
 	float previousScore;
 
 
