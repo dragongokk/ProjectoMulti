@@ -67,7 +67,7 @@ void AProjectoPruebasSCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	bDead = false;
+
 
 	if(GetLocalRole() == ROLE_Authority)
 	{
@@ -112,11 +112,6 @@ void AProjectoPruebasSCharacter::AttachToCharacter()
 void AProjectoPruebasSCharacter::OnRep_WeaponChange()
 {
 	AttachToCharacter();
-}
-
-void AProjectoPruebasSCharacter::OnRep_DeadOrAlive()
-{
-	
 }
 
 void AProjectoPruebasSCharacter::DestroyWeapon()
@@ -167,10 +162,6 @@ AProjectPruebasController* AProjectoPruebasSCharacter::GetMyController()
 	return ProjectPruebasController;
 }
 
-bool AProjectoPruebasSCharacter::IsDead()
-{
-	return bDead;
-}
 
 void AProjectoPruebasSCharacter::OnZeroHealthFunction()
 {
@@ -252,12 +243,12 @@ void AProjectoPruebasSCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-	ReplicatePitch();
+	ReplicatePitch(FirstPersonCameraComponent->GetComponentRotation());
 }
 
-void AProjectoPruebasSCharacter::ReplicatePitch_Implementation()
+void AProjectoPruebasSCharacter::ReplicatePitch_Implementation(FRotator Rotation)
 {
-	FirstPersonCameraComponent->SetWorldRotation(GetViewRotation());
+	FirstPersonCameraComponent->SetWorldRotation(Rotation);
 }
 
 float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,

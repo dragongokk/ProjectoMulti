@@ -99,22 +99,15 @@ protected:
 
 	
 	UFUNCTION(server,reliable,WithValidation)
-	void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+	virtual void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
 
 	UFUNCTION(Server,Reliable, WithValidation)
-	void ReloadServer();
+	virtual void ReloadServer();
 	
-	void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform, bool bDamage);
+	virtual void ProcessHitConfirmed(FHitResult Impact,FTransform RelativeTransform, bool bDamage);
 
-	void ComputeBoxValidation(FBox Box,FHitResult Impact,FTransform RelativeTransform);
+	virtual void ComputeBoxValidation(FBox Box,FHitResult Impact,FHitResult ServerResult,FTransform RelativeTransform); //No usada pero interesante para paliar errores de hit
 	
 	UFUNCTION()
 	virtual void OnRep_HitInfo();
-
-
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 };

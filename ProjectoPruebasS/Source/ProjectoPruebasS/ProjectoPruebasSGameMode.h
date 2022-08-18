@@ -24,9 +24,11 @@ public:
 	UPROPERTY()
 	TArray<AFlagDomain*> Flags;
 	
-private:
 	UPROPERTY()
 	AGameStateProyectoPruebas* MyGameState;
+	
+	
+private:
 
 	FTimerHandle AddScoreTimer;
 

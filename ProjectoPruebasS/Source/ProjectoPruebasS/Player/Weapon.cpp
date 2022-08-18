@@ -15,7 +15,7 @@
 // Sets default values
 AWeapon::AWeapon()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Gun"));
 	RootComponent = FP_Gun;
@@ -26,22 +26,21 @@ AWeapon::AWeapon()
 	FP_Gun2->bOwnerNoSee = true;
 
 	WeaponDamage = 50.f;
-	
+
 
 	bReplicates = true;
-//	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
+	//	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
 	bNetUseOwnerRelevancy = true;
-	
 }
 
 void AWeapon::Init(AProjectoPruebasSCharacter* Character)
 {
-	if(IsValid(Character))
+	if (IsValid(Character))
 	{
 		OwnerCharacter = Character;
 		SetInstigator(Character);
 		SetOwner(Character);
-		MyController= Cast<AProjectPruebasController>(OwnerCharacter->GetController());
+		MyController = Cast<AProjectPruebasController>(OwnerCharacter->GetController());
 		// For Rpc Calls
 	}
 }
@@ -53,11 +52,12 @@ AProjectoPruebasSCharacter* AWeapon::GetOwner()
 
 void AWeapon::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
 {
-	if(OwnerCharacter->IsLocallyControlled())
+	if (OwnerCharacter->IsLocallyControlled())
 	{
 		UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot, FP_Gun,TEXT("Muzzle"), FVector(ForceInit),
 											   FRotator::ZeroRotator, ScaleShootEffect);
-	}else
+	}
+	else
 	{
 		UGameplayStatics::SpawnEmitterAttached(ParticleSystemShoot, FP_Gun2,TEXT("Muzzle"), FVector(ForceInit),
 											   FRotator::ZeroRotator, ScaleShootEffect);
@@ -67,16 +67,20 @@ void AWeapon::SimulateShoot(FHitResult hitResult, FTransform RelativeTransForm)
 	{
 		UGameplayStatics::SpawnEmitterAttached(ParticleSystemHit, hitResult.GetActor()->GetRootComponent(), NAME_None,
 											   RelativeTransForm.GetLocation(),
-											   RelativeTransForm.GetRotation().Rotator(), ScaleShootHit/hitResult.GetActor()->GetRootComponent()->GetComponentScale());
-	} else if(hitResult.bBlockingHit)
+											   RelativeTransForm.GetRotation().Rotator(), ScaleShootHit / hitResult.GetActor()->GetRootComponent()->GetComponentScale());
+	}
+}
+/*
+	else if (hitResult.bBlockingHit)
 	{
 		FTransform TransformEmitter;
 		TransformEmitter.SetLocation(hitResult.Location);
 		TransformEmitter.SetRotation(hitResult.ImpactNormal.Rotation().Quaternion());
 		TransformEmitter.SetScale3D(ScaleShootHit);
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),ParticleSystemHit,TransformEmitter);
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleSystemHit, TransformEmitter);
 	}
 }
+*/
 
 void AWeapon::OnFire()
 {
@@ -88,7 +92,7 @@ void AWeapon::OnFire()
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(OwnerCharacter);
 		this->GetWorld()->LineTraceSingleByChannel(HitResult, CameraTrans.GetLocation(), EndPoint,
-												   ECC_GameTraceChannel1, Params);
+		                                           ECC_GameTraceChannel1, Params);
 		if (IsValid(HitResult.GetActor()) && HitResult.GetActor()->GetRemoteRole() == ROLE_Authority)
 		{
 			//We hit a character so where are going to try a precise shoot
@@ -99,19 +103,13 @@ void AWeapon::OnFire()
 			RelativeTransform.SetRotation(UKismetMathLibrary::InverseTransformRotation(
 				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(),
 				HitResult.ImpactNormal.Rotation()).Quaternion());
+			AProjectoPruebasSCharacter* CharacterHitted = Cast<AProjectoPruebasSCharacter>(HitResult.GetActor());
 			SimulateShoot(HitResult, RelativeTransform);
-			ReConfirmHitServer(HitResult, RelativeTransform,Cast<AProjectoPruebasSCharacter>(HitResult.GetActor()));
+			ReConfirmHitServer(HitResult, RelativeTransform, CharacterHitted);
 		}
 		else
 		{
-			if (HitResult.bBlockingHit)
-			{
-				ReConfirmHitServer(HitResult, FTransform::Identity,nullptr);
-			}
-			else
-			{
-				ReConfirmHitServer(HitResult, FTransform::Identity,nullptr);
-			}
+			ReConfirmHitServer(HitResult, FTransform::Identity, nullptr);
 		}
 
 		if (bDebug)
@@ -138,54 +136,51 @@ void AWeapon::BeginPlay()
 }
 
 void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform,
-	AProjectoPruebasSCharacter* HitCharacter)
+                                                AProjectoPruebasSCharacter* HitCharacter)
 {
-	if(Ammo > 0)
+	if (Ammo > 0)
 	{
-		if(OwnerCharacter && HitCharacter && OwnerCharacter->GetMyController() && HitCharacter->GetMyController() &&
-		  (OwnerCharacter->GetMyController()->Team == HitCharacter->GetMyController()->Team))
+		if (OwnerCharacter && HitCharacter && OwnerCharacter->GetMyController() && HitCharacter->GetMyController() &&
+			(OwnerCharacter->GetMyController()->Team == HitCharacter->GetMyController()->Team))
 		{
-			ProcessHitConfirmed(Impact,RelativeTransform,false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
+			ProcessHitConfirmed(Impact, RelativeTransform, false); //Le damos automaticamente la razón si hemos disparado a un amigo ya que no le vamos a hacer daño
 		}
-		else if(OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
+		if (OwnerCharacter && (Impact.GetActor() || Impact.bBlockingHit))
 		{
 			FVector Origin = OwnerCharacter->FirstPersonCameraComponent->GetComponentLocation(); //Pienso que es mejor tener en cuenta que el disparo realmente se esta realizando desde la camara
 			FVector DirVector = (Impact.Location - Origin).GetSafeNormal();
 
-			float viewDot = FVector::DotProduct(OwnerCharacter->GetViewRotation().Vector(),DirVector);
-			if(bDebug)
+			float viewDot = FVector::DotProduct(OwnerCharacter->FirstPersonCameraComponent->GetComponentRotation().Vector(), DirVector);
+			if (bDebug)
 			{
-				if(GEngine)
+				if (GEngine)
 					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, Origin.ToString());
 			}
-			if(viewDot > AngleLimit ) //Vemos si hay demasiado desync (LAG)
+			if (viewDot > AngleLimit) //Vemos si hay demasiado desync (LAG)
+			{
+				FHitResult HitResult;
+				FCollisionQueryParams Params;
+				Params.AddIgnoredActor(OwnerCharacter);
+				FVector ImpactClientLocation = UKismetMathLibrary::TransformLocation(Impact.GetActor()->GetRootComponent()->GetComponentTransform(), RelativeTransform.GetLocation());
+				if ((ImpactClientLocation - Impact.Location).Length() <= 20.f)
 				{
-				if(!(Impact.GetActor()) && Impact.bBlockingHit)
-				{
-					ProcessHitConfirmed(Impact,RelativeTransform,true);
-				}else if(Impact.GetActor())
-				{
-					if(Impact.GetActor()->IsRootComponentStatic() || Impact.GetActor()->IsRootComponentStationary())
+					FVector EndPoint = ImpactClientLocation + (DirVector * 10000);
+					this->GetWorld()->LineTraceSingleByChannel(HitResult, Origin, EndPoint,
+					                                           ECC_GameTraceChannel1, Params);
+					if (HitResult.GetActor())
 					{
-						ProcessHitConfirmed(Impact,RelativeTransform,true); //Le damos la razón automaticamente si el objeto es estático
-					}else
-					{
-						if(!(HitCharacter))
-						{
-							const FBox Box = Impact.GetActor()->GetComponentsBoundingBox();
-
-							ComputeBoxValidation(Box,Impact,RelativeTransform);
-							
-						}else
-						{
-							const FBox Box = HitCharacter->Mesh3P->GetBodyInstance(Impact.BoneName)->GetBodyBounds();
-
-							ComputeBoxValidation(Box,Impact,RelativeTransform);
-						}
+						FTransform RelativeTransformServer;
+						RelativeTransformServer.SetLocation(UKismetMathLibrary::InverseTransformLocation(
+							HitResult.GetActor()->GetRootComponent()->GetComponentTransform(), HitResult.ImpactPoint));
+						RelativeTransformServer.SetRotation(UKismetMathLibrary::InverseTransformRotation(
+							HitResult.GetActor()->GetRootComponent()->GetComponentTransform(),
+							HitResult.ImpactNormal.Rotation()).Quaternion());
+						ProcessHitConfirmed(HitResult, RelativeTransformServer, true);
 					}
 				}
-				}
-		}else
+			}
+		}
+		else
 		{
 			ProcessHitConfirmed(Impact, FTransform::Identity, false); //Ha fallado el tiro por lo tanto solo reproducimos el disparo
 		}
@@ -193,7 +188,7 @@ void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform Re
 }
 
 bool AWeapon::ReConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform,
-	AProjectoPruebasSCharacter* HitCharacter)
+                                          AProjectoPruebasSCharacter* HitCharacter)
 {
 	return true;
 }
@@ -208,49 +203,60 @@ bool AWeapon::ReloadServer_Validate()
 	return true;
 }
 
-void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform,  bool bDamage)
+void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransform, bool bDamage)
 {
-	if(GetLocalRole() == ROLE_Authority)
+	if (GetLocalRole() == ROLE_Authority)
 	{
 		OnHitInfo.HitResult = Impact;
 		OnHitInfo.RelativeTransform = RelativeTransform;
 		OnHitInfo.Shooting = !OnHitInfo.Shooting;
-		Ammo = Ammo-1;
+		Ammo = Ammo - 1;
 
-		if(bDamage && Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
+		if (bDamage && Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
 		{
 			UProjectPruebasGameInstance* MyGameInstance = Cast<UProjectPruebasGameInstance>(GetGameInstance());
-			if(MyGameInstance)
+			if (MyGameInstance)
 			{
+				float Damage = WeaponDamage;
 				UData* Data = MyGameInstance->Data;
-				if(Data)
+				if (Data)
 				{
-					FBonesMultiplierData* BoneMultiplierData= Data->BonesMultiplierData.Find(Impact.BoneName);
-					if(BoneMultiplierData)
+					FBonesMultiplierData* BoneMultiplierData = Data->BonesMultiplierData.Find(Impact.BoneName);
+					if (BoneMultiplierData)
 					{
-						float Damage = BoneMultiplierData->DamageMultiplier * WeaponDamage;
-						UGameplayStatics::ApplyDamage(Impact.GetActor(),Damage,GetInstigator()->GetController(),this,nullptr);
+						Damage = BoneMultiplierData->DamageMultiplier * Damage;
 					}
 				}
+				UGameplayStatics::ApplyDamage(Impact.GetActor(), Damage, GetInstigator()->GetController(), this, nullptr);
 			}
 		}
 	}
 }
 
-void AWeapon::ComputeBoxValidation(FBox Box, FHitResult Impact, FTransform RelativeTransform)
+void AWeapon::ComputeBoxValidation(FBox Box, FHitResult Impact, FHitResult ServerResult, FTransform RelativeTransform)
 {
 	FVector BoxExtent = Box.GetExtent();
 	FVector BoxCenter = Box.GetCenter();
 
-	BoxExtent.X = UKismetMathLibrary::Max(20.0f,BoxExtent.X);
-	BoxExtent.Y = UKismetMathLibrary::Max(20.0f,BoxExtent.Y);
-	BoxExtent.Z = UKismetMathLibrary::Max(20.0f,BoxExtent.Z);
-	
-	if(	FMath::Abs(Impact.Location.X - BoxCenter.X) < BoxExtent.X &&
+	BoxExtent.X = UKismetMathLibrary::Max(20.0f, BoxExtent.X);
+	BoxExtent.Y = UKismetMathLibrary::Max(20.0f, BoxExtent.Y);
+	BoxExtent.Z = UKismetMathLibrary::Max(20.0f, BoxExtent.Z);
+
+	if (FMath::Abs(Impact.Location.X - BoxCenter.X) < BoxExtent.X &&
 		FMath::Abs(Impact.Location.Y - BoxCenter.Y) < BoxExtent.Y &&
 		FMath::Abs(Impact.Location.Z - BoxCenter.Z) < BoxExtent.Z)
 	{
-		ProcessHitConfirmed(Impact,RelativeTransform,true);
+		ProcessHitConfirmed(Impact, RelativeTransform, true);
+	}
+	else
+	{
+		FTransform RelativeTransformServer;
+		RelativeTransform.SetLocation(UKismetMathLibrary::InverseTransformLocation(
+			ServerResult.GetActor()->GetRootComponent()->GetComponentTransform(), ServerResult.ImpactPoint));
+		RelativeTransform.SetRotation(UKismetMathLibrary::InverseTransformRotation(
+			ServerResult.GetActor()->GetRootComponent()->GetComponentTransform(),
+			ServerResult.ImpactNormal.Rotation()).Quaternion());
+		ProcessHitConfirmed(ServerResult, RelativeTransformServer, true);
 	}
 }
 
@@ -260,17 +266,9 @@ void AWeapon::OnRep_HitInfo()
 }
 
 
-// Called every frame
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(AWeapon, OnHitInfo, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AWeapon, Ammo, COND_OwnerOnly);
 }
-

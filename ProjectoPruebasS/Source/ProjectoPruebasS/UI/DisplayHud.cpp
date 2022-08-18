@@ -6,6 +6,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "ProjectoPruebasS/ProjectoPruebasSGameMode.h"
 #include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
 #include "ProjectoPruebasS/Player/ProjectoPruebasSCharacter.h"
 #include "ProjectoPruebasS/Player/Components/HealthComponent.h"
@@ -37,6 +38,16 @@ void UDisplayHud::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 			SetAmmo(MyCharacter->FP_Gun->Ammo);
 			PreviousAmmo = MyCharacter->FP_Gun->Ammo;
 		}
+		if(!MyGameState)
+		{
+			AGameStateProyectoPruebas* MyGameSateTemp= Cast<AGameStateProyectoPruebas>(MyCharacter->GetWorld()->GetGameState());
+			MyGameState = MyGameSateTemp;
+		}
+		if(MyGameState)
+		{
+			SetRedScore(MyGameState->ScoreRed);
+			SetBlueScore(MyGameState->ScoreBlue);
+		}
 	}
 }
 
@@ -51,4 +62,14 @@ void UDisplayHud::SetPercentHealth(float health)
 void UDisplayHud::SetAmmo(float currentAmmo)
 {
 	Ammo->SetText(FText::FromString(FString::FromInt(currentAmmo)));
+}
+
+void UDisplayHud::SetRedScore(float Score)
+{
+	RedScore->SetText(FText::FromString(FString::FromInt(Score)));
+}
+
+void UDisplayHud::SetBlueScore(float Score)
+{
+	BlueScore->SetText(FText::FromString(FString::FromInt(Score)));
 }

@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "DisplayHud.generated.h"
 
+
+class AGameStateProyectoPruebas;
 class AProjectoPruebasSCharacter;
 class UTextBlock;
 class UProgressBar;
@@ -23,9 +25,18 @@ protected:
 
 	UPROPERTY( VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
 	TObjectPtr<UTextBlock> Ammo;
+	
+	UPROPERTY( VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
+	TObjectPtr<UTextBlock> RedScore;
+
+	UPROPERTY( VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
+	TObjectPtr<UTextBlock> BlueScore;
 
 	UPROPERTY(Transient)
 	AProjectoPruebasSCharacter* MyCharacter;
+
+	UPROPERTY(Transient)
+	AGameStateProyectoPruebas* MyGameState;
 
 	float PreviousAmmo;
 public:
@@ -40,4 +51,7 @@ public:
 	UFUNCTION()
 	void SetAmmo(float currentAmmo);
 	
+	void SetRedScore(float Score);
+	
+	void SetBlueScore(float Score);
 };

@@ -41,6 +41,12 @@ void UHealthComponent::UpdateHealth(float Amount)
 			return;
 		}
 		CurrentHealth +=Amount;
+		if(bDebug )
+		{
+			if(GEngine)
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,TEXT("Soy el Servidor con ")+FString::SanitizeFloat(CurrentHealth));
+			
+		}
 	}
 }
 
@@ -51,10 +57,12 @@ void UHealthComponent::OnRep_CurrentHealth()
 	{
 		OnHealthUpdate.Broadcast(CurrentHealth);
 	}
-	if(bDebug)
+	if(bDebug && GetOwner()->GetLocalRole() == ENetRole::ROLE_AutonomousProxy )
 	{
 		if(GEngine)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::SanitizeFloat(CurrentHealth));
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow,TEXT("Soy el cliente con ")+FString::SanitizeFloat(CurrentHealth));
+		}
 	}
 }
 
@@ -65,7 +73,6 @@ void UHealthComponent::BeginPlay()
 	Super::BeginPlay();
     CurrentHealth = MaxHealth;
 	OwnerCharacter = Cast<AProjectoPruebasSCharacter>(GetOwner());
-	// ...
 	
 }
 
