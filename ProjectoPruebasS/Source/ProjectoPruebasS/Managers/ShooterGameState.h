@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
-#include "GameStateProyectoPruebas.generated.h"
+#include "ShooterGameState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTOPRUEBASS_API AGameStateProyectoPruebas : public AGameStateBase
+class PROJECTOPRUEBASS_API AShooterGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 public:

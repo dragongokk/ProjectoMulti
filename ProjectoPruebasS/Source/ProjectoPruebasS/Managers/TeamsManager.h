@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectPruebaLibrary.h"
+#include "../Librerias/ShooterLibrary.h"
 #include "UObject/NoExportTypes.h"
 #include "TeamsManager.generated.h"
 
-class AProjectPruebasController;
+class AShooterController;
 
 /**
  * 
@@ -34,10 +34,10 @@ public:
 	 * @brief Add a character to the corresponding team, if it is already added it will not be added
 	 * @param CharacterController Character Controller to add, it had the data of the Team that is in
 	 */
-	void AddToTeam(AProjectPruebasController* CharacterController);
+	void AddToTeam(AShooterController* CharacterController);
 
 	
-	void RemoveToTheTeam(AProjectPruebasController* CharacterController);
+	void RemoveToTheTeam(AShooterController* CharacterController);
 
 	
 	

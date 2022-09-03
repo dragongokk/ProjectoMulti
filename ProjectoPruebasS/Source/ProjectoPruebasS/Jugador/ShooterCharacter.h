@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "Weapon.h"
 #include "GameFramework/Character.h"
-#include "ProjectoPruebasS/ProjectPruebaLibrary.h"
-#include "ProjectoPruebasSCharacter.generated.h"
+#include "ProjectoPruebasS/Librerias/ShooterLibrary.h"
+#include "ShooterCharacter.generated.h"
 
-class AProjectPruebasController;
-class AProjectoPruebasSCharacter;
+class AShooterController;
+class AShooterCharacter;
 class UHealthComponent;
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -21,7 +21,7 @@ class USoundBase;
 
 
 UCLASS(config=Game)
-class AProjectoPruebasSCharacter : public ACharacter
+class AShooterCharacter : public ACharacter
 {
 	GENERATED_BODY()
 public:
@@ -68,14 +68,14 @@ public:
 
 protected:
 	UPROPERTY()
-	AProjectPruebasController* ProjectPruebasController;
+	AShooterController* ProjectPruebasController;
 
 private:
 	float InfiValueMove = 0;
 
 	
 public:
-	AProjectoPruebasSCharacter();
+	AShooterCharacter();
 	
 
 	UFUNCTION(BlueprintCallable)
@@ -112,7 +112,7 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	AProjectPruebasController* GetMyController();
+	AShooterController* GetMyController();
 
 	bool IsDead();
 

@@ -7,8 +7,8 @@
 #include "DisplayHud.generated.h"
 
 
-class AGameStateProyectoPruebas;
-class AProjectoPruebasSCharacter;
+class AShooterGameState;
+class AShooterCharacter;
 class UTextBlock;
 class UProgressBar;
 /**
@@ -33,10 +33,10 @@ protected:
 	TObjectPtr<UTextBlock> BlueScore;
 
 	UPROPERTY(Transient)
-	AProjectoPruebasSCharacter* MyCharacter;
+	AShooterCharacter* MyCharacter;
 
 	UPROPERTY(Transient)
-	AGameStateProyectoPruebas* MyGameState;
+	AShooterGameState* MyGameState;
 
 	float PreviousAmmo;
 public:

@@ -2,13 +2,13 @@
 
 
 #include "Weapon.h"
-#include "ProjectoPruebasSCharacter.h"
-#include "ProjectPruebasController.h"
+#include "ShooterCharacter.h"
+#include "ShooterController.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
+#include "../Managers/ShooterGameInstance.h"
 #include "ProjectoPruebasS/DataTables/Data.h"
 #include "ProjectoPruebasS/UI/DisplayHud.h"
 
@@ -33,19 +33,19 @@ AWeapon::AWeapon()
 	bNetUseOwnerRelevancy = true;
 }
 
-void AWeapon::Init(AProjectoPruebasSCharacter* Character)
+void AWeapon::Init(AShooterCharacter* Character)
 {
 	if (IsValid(Character))
 	{
 		OwnerCharacter = Character;
 		SetInstigator(Character);
 		SetOwner(Character);
-		MyController = Cast<AProjectPruebasController>(OwnerCharacter->GetController());
+		MyController = Cast<AShooterController>(OwnerCharacter->GetController());
 		// For Rpc Calls
 	}
 }
 
-AProjectoPruebasSCharacter* AWeapon::GetOwner()
+AShooterCharacter* AWeapon::GetOwner()
 {
 	return OwnerCharacter;
 }
@@ -103,7 +103,7 @@ void AWeapon::OnFire()
 			RelativeTransform.SetRotation(UKismetMathLibrary::InverseTransformRotation(
 				HitResult.GetActor()->GetRootComponent()->GetComponentTransform(),
 				HitResult.ImpactNormal.Rotation()).Quaternion());
-			AProjectoPruebasSCharacter* CharacterHitted = Cast<AProjectoPruebasSCharacter>(HitResult.GetActor());
+			AShooterCharacter* CharacterHitted = Cast<AShooterCharacter>(HitResult.GetActor());
 			SimulateShoot(HitResult, RelativeTransform);
 			ReConfirmHitServer(HitResult, RelativeTransform, CharacterHitted);
 		}
@@ -136,7 +136,7 @@ void AWeapon::BeginPlay()
 }
 
 void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform RelativeTransform,
-                                                AProjectoPruebasSCharacter* HitCharacter)
+                                                AShooterCharacter* HitCharacter)
 {
 	if (Ammo > 0)
 	{
@@ -188,7 +188,7 @@ void AWeapon::ReConfirmHitServer_Implementation(FHitResult Impact, FTransform Re
 }
 
 bool AWeapon::ReConfirmHitServer_Validate(FHitResult Impact, FTransform RelativeTransform,
-                                          AProjectoPruebasSCharacter* HitCharacter)
+                                          AShooterCharacter* HitCharacter)
 {
 	return true;
 }
@@ -214,7 +214,7 @@ void AWeapon::ProcessHitConfirmed(FHitResult Impact, FTransform RelativeTransfor
 
 		if (bDamage && Impact.GetActor() && Impact.GetActor()->CanBeDamaged())
 		{
-			UProjectPruebasGameInstance* MyGameInstance = Cast<UProjectPruebasGameInstance>(GetGameInstance());
+			UShooterGameInstance* MyGameInstance = Cast<UShooterGameInstance>(GetGameInstance());
 			if (MyGameInstance)
 			{
 				float Damage = WeaponDamage;

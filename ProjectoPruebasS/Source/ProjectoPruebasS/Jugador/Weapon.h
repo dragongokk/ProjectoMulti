@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
-class AProjectPruebasController;
+class AShooterController;
 USTRUCT()
 struct FInstantHitInfo
 {
@@ -22,7 +22,7 @@ struct FInstantHitInfo
 	bool Shooting = true;
 };
 
-class AProjectoPruebasSCharacter;
+class AShooterCharacter;
 UCLASS()
 class PROJECTOPRUEBASS_API AWeapon : public AActor
 {
@@ -69,10 +69,10 @@ protected:
 	FTimerHandle TimerPrueba;
 	
 	UPROPERTY(Transient)
-	AProjectoPruebasSCharacter* OwnerCharacter;
+	AShooterCharacter* OwnerCharacter;
 
 	UPROPERTY(Transient)
-	AProjectPruebasController* MyController;
+	AShooterController* MyController;
 
 	UPROPERTY(Transient,ReplicatedUsing = OnRep_HitInfo)
 	FInstantHitInfo OnHitInfo;
@@ -83,9 +83,9 @@ public:
 	// Sets default values for this actor's properties
 	AWeapon();
 
-	virtual void Init(AProjectoPruebasSCharacter* Character);
+	virtual void Init(AShooterCharacter* Character);
 
-	AProjectoPruebasSCharacter* GetOwner();
+	AShooterCharacter* GetOwner();
 
 	void SimulateShoot(FHitResult hitResult,FTransform RelativeTransForm);
 
@@ -99,7 +99,7 @@ protected:
 
 	
 	UFUNCTION(server,reliable,WithValidation)
-	virtual void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AProjectoPruebasSCharacter* HitCharacter);
+	virtual void ReConfirmHitServer(FHitResult Impact,FTransform RelativeTransform,AShooterCharacter* HitCharacter);
 
 	UFUNCTION(Server,Reliable, WithValidation)
 	virtual void ReloadServer();

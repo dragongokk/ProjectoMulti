@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "GameStateProyectoPruebas.h"
+#include "ShooterGameState.h"
 
 #include "Net/UnrealNetwork.h"
 
-void AGameStateProyectoPruebas::OnRep_ScoreBlue()
+void AShooterGameState::OnRep_ScoreBlue()
 {
 	/*
 	if(GEngine)
@@ -13,7 +13,7 @@ void AGameStateProyectoPruebas::OnRep_ScoreBlue()
 		*/
 }
 
-void AGameStateProyectoPruebas::OnRep_ScoreRed()
+void AShooterGameState::OnRep_ScoreRed()
 {
 	/*
 	if(GEngine)
@@ -21,9 +21,9 @@ void AGameStateProyectoPruebas::OnRep_ScoreRed()
 		*/
 }
 
-void AGameStateProyectoPruebas::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AShooterGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AGameStateProyectoPruebas, ScoreBlue);
-	DOREPLIFETIME(AGameStateProyectoPruebas, ScoreRed);
+	DOREPLIFETIME(AShooterGameState, ScoreBlue);
+	DOREPLIFETIME(AShooterGameState, ScoreRed);
 }

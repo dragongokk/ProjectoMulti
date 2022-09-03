@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectPruebasController.h"
+#include "../Jugador/ShooterController.h"
 #include "GameFramework/PlayerStart.h"
-#include "ProjectoPruebasS/ProjectPruebaLibrary.h"
+#include "ProjectoPruebasS/Librerias/ShooterLibrary.h"
 #include "PlayerStartTeam.generated.h"
 
 /**
@@ -23,7 +23,7 @@ public:
 	ETeam Team;
 
 	UPROPERTY(Transient)
-	AProjectPruebasController* ControllerOwningThisStart = nullptr;
+	AShooterController* ControllerOwningThisStart = nullptr;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = Mesh)
 	UStaticMeshComponent* BubleLocate;

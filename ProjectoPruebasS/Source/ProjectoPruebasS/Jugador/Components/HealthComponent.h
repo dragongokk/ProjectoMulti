@@ -7,7 +7,7 @@
 
 #include "HealthComponent.generated.h"
 
-class AProjectoPruebasSCharacter;
+class AShooterCharacter;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthUpdate,float, CurrentHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnZeroHealth);
 
@@ -37,7 +37,7 @@ protected:
 	float CurrentHealth;
 
 	UPROPERTY(Transient)
-	AProjectoPruebasSCharacter* OwnerCharacter;
+	AShooterCharacter* OwnerCharacter;
 
 public:	
 	// Sets default values for this component's properties

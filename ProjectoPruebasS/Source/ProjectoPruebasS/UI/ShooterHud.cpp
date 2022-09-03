@@ -1,20 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProyectPruebasHud.h"
+#include "ShooterHud.h"
 
 #include "CanvasItem.h"
 #include "DisplayHud.h"
 #include "Blueprint/UserWidget.h"
 #include "Engine/Canvas.h"
 
-AProyectPruebasHud::AProyectPruebasHud()
+AShooterHud::AShooterHud()
 {
 	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("/Game/FirstPerson/Textures/FirstPersonCrosshair"));
 	CrosshairTex = CrosshairTexObj.Object;
 }
 
-void AProyectPruebasHud::DrawHUD()
+void AShooterHud::DrawHUD()
 {
 	Super::DrawHUD();
 
@@ -37,7 +37,7 @@ void AProyectPruebasHud::DrawHUD()
 	}
 }
 
-void AProyectPruebasHud::BeginPlay()
+void AShooterHud::BeginPlay()
 {
 	Super::BeginPlay();
 

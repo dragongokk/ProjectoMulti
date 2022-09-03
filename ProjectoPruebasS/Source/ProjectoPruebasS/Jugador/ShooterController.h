@@ -7,16 +7,16 @@
 
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerStart.h"
-#include "ProjectoPruebasS/ProjectPruebaLibrary.h"
-#include "ProjectPruebasController.generated.h"
+#include "ProjectoPruebasS/Librerias/ShooterLibrary.h"
+#include "ShooterController.generated.h"
 
-class AProyectPruebasHud;
-class AProjectoPruebasSCharacter;
+class AShooterHud;
+class AShooterCharacter;
 /**
  * 
  */
 UCLASS()
-class PROJECTOPRUEBASS_API AProjectPruebasController : public APlayerController
+class PROJECTOPRUEBASS_API AShooterController : public APlayerController
 {
 	GENERATED_BODY()
 
@@ -25,10 +25,10 @@ public:
 	ETeam Team;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Pawns)
-	TSubclassOf<AProjectoPruebasSCharacter> ReadTeamPawn;
+	TSubclassOf<AShooterCharacter> ReadTeamPawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = Pawns)
-	TSubclassOf<AProjectoPruebasSCharacter> BlueTeamPawn;
+	TSubclassOf<AShooterCharacter> BlueTeamPawn;
 
 	UPROPERTY()
 	APlayerStart* SpawnForThisController;
@@ -62,7 +62,7 @@ protected:
 	virtual void SetupInputComponent() override;
 
 	UPROPERTY()
-	AProjectoPruebasSCharacter* MainCharacter;
+	AShooterCharacter* MainCharacter;
 	
 };
 

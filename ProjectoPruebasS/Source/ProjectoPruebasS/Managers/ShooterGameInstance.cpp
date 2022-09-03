@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProjectPruebasGameInstance.h"
+#include "ShooterGameInstance.h"
 
-#include "DataTables/Data.h"
+#include "../DataTables/Data.h"
 #include "Kismet/GameplayStatics.h"
-#include "Player/ProjectoPruebasSCharacter.h"
+#include "../Jugador/ShooterCharacter.h"
 
-void UProjectPruebasGameInstance::Init()
+void UShooterGameInstance::Init()
 {
 	Super::Init();
 
@@ -19,11 +19,11 @@ void UProjectPruebasGameInstance::Init()
 	
 }
 
-AProjectoPruebasSCharacter* UProjectPruebasGameInstance::GetYourCharacter()
+AShooterCharacter* UShooterGameInstance::GetYourCharacter()
 {
 	if(!IsValid(YourCharacter))
 	{
-		YourCharacter = Cast<AProjectoPruebasSCharacter>(UGameplayStatics::GetPlayerCharacter(this,0));
+		YourCharacter = Cast<AShooterCharacter>(UGameplayStatics::GetPlayerCharacter(this,0));
 	}
 	return YourCharacter;
 }

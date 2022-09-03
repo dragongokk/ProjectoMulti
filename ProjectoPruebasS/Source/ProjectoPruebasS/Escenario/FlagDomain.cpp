@@ -3,11 +3,11 @@
 
 #include "FlagDomain.h"
 
-#include "ProjectoPruebasSGameMode.h"
+#include "../Managers/ShooterGameMode.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "Player/ProjectoPruebasSCharacter.h"
+#include "../Jugador/ShooterCharacter.h"
 
 // Sets default values
 AFlagDomain::AFlagDomain()
@@ -34,7 +34,7 @@ void AFlagDomain::BeginPlay()
 	Super::BeginPlay();
 	if((GetNetMode() == NM_DedicatedServer || GetLocalRole() == ROLE_Authority) && IsValid(GetWorld()))
 	{
-		AProjectoPruebasSGameMode* MyGamemode = Cast<AProjectoPruebasSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		AShooterGameMode* MyGamemode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		if(IsValid(MyGamemode))
 		{
 			MyGamemode->Flags.AddUnique(this);
@@ -109,7 +109,7 @@ void AFlagDomain::OnCapsuleEndOverlap(UPrimitiveComponent* OverlappedComponent, 
 {
 	if(GetLocalRole() == ROLE_Authority)
 	{
-		const AProjectoPruebasSCharacter* Character = Cast<AProjectoPruebasSCharacter> (OtherActor);
+		const AShooterCharacter* Character = Cast<AShooterCharacter> (OtherActor);
 		if(Character)
 		{
 			switch (Character->Team)
@@ -133,7 +133,7 @@ void AFlagDomain::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent
 {
 	if(GetLocalRole() == ROLE_Authority)
 	{
-		const AProjectoPruebasSCharacter* Character = Cast<AProjectoPruebasSCharacter> (OtherActor);
+		const AShooterCharacter* Character = Cast<AShooterCharacter> (OtherActor);
 		if(Character)
 		{
 			switch (Character->Team)

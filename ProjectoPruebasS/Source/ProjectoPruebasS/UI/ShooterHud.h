@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "ProyectPruebasHud.generated.h"
+#include "ShooterHud.generated.h"
 
 class UDisplayHud;
 /**
  * 
  */
 UCLASS()
-class PROJECTOPRUEBASS_API AProyectPruebasHud : public AHUD
+class PROJECTOPRUEBASS_API AShooterHud : public AHUD
 {
 	GENERATED_BODY()
 
 
 public:
-	AProyectPruebasHud();
+	AShooterHud();
 
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;

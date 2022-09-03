@@ -3,10 +3,10 @@
 
 #include "TeamsManager.h"
 
-#include "Player/ProjectPruebasController.h"
+#include "../Jugador/ShooterController.h"
 
 
-void UTeamsManager::AddToTeam(AProjectPruebasController* CharacterController)
+void UTeamsManager::AddToTeam(AShooterController* CharacterController)
 {
 	if(IsValid(CharacterController))
 	{
@@ -26,7 +26,7 @@ void UTeamsManager::AddToTeam(AProjectPruebasController* CharacterController)
 	}
 }
 
-void UTeamsManager::RemoveToTheTeam(AProjectPruebasController* CharacterController)
+void UTeamsManager::RemoveToTheTeam(AShooterController* CharacterController)
 {
 	if(IsValid(CharacterController))
 	{

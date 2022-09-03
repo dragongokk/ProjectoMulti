@@ -4,7 +4,7 @@
 #include "HealthComponent.h"
 
 #include "Net/UnrealNetwork.h"
-#include "ProjectoPruebasS/Player/ProjectoPruebasSCharacter.h"
+#include "ProjectoPruebasS/Jugador/ShooterCharacter.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -72,7 +72,7 @@ void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
     CurrentHealth = MaxHealth;
-	OwnerCharacter = Cast<AProjectoPruebasSCharacter>(GetOwner());
+	OwnerCharacter = Cast<AShooterCharacter>(GetOwner());
 	
 }
 

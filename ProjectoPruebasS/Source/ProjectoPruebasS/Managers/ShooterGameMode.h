@@ -7,13 +7,13 @@
 
 
 #include "GameFramework/GameModeBase.h"
-#include "ProjectoPruebasSGameMode.generated.h"
+#include "ShooterGameMode.generated.h"
 
 class AFlagDomain;
-class AGameStateProyectoPruebas;
+class AShooterGameState;
 class UTeamsManager;
 UCLASS(minimalapi)
-class AProjectoPruebasSGameMode : public AGameModeBase
+class AShooterGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
@@ -25,7 +25,7 @@ public:
 	TArray<AFlagDomain*> Flags;
 	
 	UPROPERTY()
-	AGameStateProyectoPruebas* MyGameState;
+	AShooterGameState* MyGameState;
 	
 	
 private:
@@ -34,7 +34,7 @@ private:
 
 	
 public:
-	AProjectoPruebasSGameMode();
+	AShooterGameMode();
 	virtual void PostInitializeComponents() override;
 	
 	virtual AActor* FindPlayerStart_Implementation(AController* Player, const FString& IncomingName = TEXT("")) override;

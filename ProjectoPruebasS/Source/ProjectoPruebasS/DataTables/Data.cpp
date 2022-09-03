@@ -3,13 +3,13 @@
 
 #include "Data.h"
 
-#include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
+#include "../Managers/ShooterGameInstance.h"
 
 void UData::Init(UWorld* World)
 {
 	if(World)
 	{
-		UProjectPruebasGameInstance* MyGameInstance = Cast<UProjectPruebasGameInstance>(World->GetGameInstance());
+		UShooterGameInstance* MyGameInstance = Cast<UShooterGameInstance>(World->GetGameInstance());
 		if(MyGameInstance)
 		{
 			if(MyGameInstance->BonesDamageMultiplier)

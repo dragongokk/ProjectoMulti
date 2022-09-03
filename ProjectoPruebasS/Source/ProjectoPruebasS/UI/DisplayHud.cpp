@@ -6,10 +6,10 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProjectoPruebasS/ProjectoPruebasSGameMode.h"
-#include "ProjectoPruebasS/ProjectPruebasGameInstance.h"
-#include "ProjectoPruebasS/Player/ProjectoPruebasSCharacter.h"
-#include "ProjectoPruebasS/Player/Components/HealthComponent.h"
+#include "../Managers/ShooterGameMode.h"
+#include "../Managers/ShooterGameInstance.h"
+#include "ProjectoPruebasS/Jugador/ShooterCharacter.h"
+#include "ProjectoPruebasS/Jugador/Components/HealthComponent.h"
 
 
 void UDisplayHud::NativeConstruct()
@@ -17,7 +17,7 @@ void UDisplayHud::NativeConstruct()
 	Super::NativeConstruct();
 
 	SetPercentHealth(100);
-	UProjectPruebasGameInstance* MyGameInstance = Cast<UProjectPruebasGameInstance>(UGameplayStatics::GetGameInstance(this));
+	UShooterGameInstance* MyGameInstance = Cast<UShooterGameInstance>(UGameplayStatics::GetGameInstance(this));
 	if(IsValid(MyGameInstance))
 	{
 		MyCharacter= MyGameInstance->GetYourCharacter();
@@ -40,7 +40,7 @@ void UDisplayHud::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		}
 		if(!MyGameState)
 		{
-			AGameStateProyectoPruebas* MyGameSateTemp= Cast<AGameStateProyectoPruebas>(MyCharacter->GetWorld()->GetGameState());
+			AShooterGameState* MyGameSateTemp= Cast<AShooterGameState>(MyCharacter->GetWorld()->GetGameState());
 			MyGameState = MyGameSateTemp;
 		}
 		if(MyGameState)

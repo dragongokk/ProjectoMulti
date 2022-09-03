@@ -1,43 +1,43 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "ProjectoPruebasSGameMode.h"
+#include "ShooterGameMode.h"
 
 #include "EngineUtils.h"
-#include "FlagDomain.h"
-#include "GameStateProyectoPruebas.h"
+#include "../Escenario/FlagDomain.h"
+#include "ShooterGameState.h"
 #include "TeamsManager.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerStart.h"
-#include "Player/PlayerStartTeam.h"
-#include "Player/ProjectoPruebasSCharacter.h"
-#include "UI/ProyectPruebasHud.h"
+#include "../Escenario/PlayerStartTeam.h"
+#include "../Jugador/ShooterCharacter.h"
+#include "../UI/ShooterHud.h"
 #include "UObject/ConstructorHelpers.h"
 
-AProjectoPruebasSGameMode::AProjectoPruebasSGameMode()
+AShooterGameMode::AShooterGameMode()
 	: Super()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
-	HUDClass = AProyectPruebasHud::StaticClass();
+	HUDClass = AShooterHud::StaticClass();
 	
 	
 }
 
-void AProjectoPruebasSGameMode::PostInitializeComponents()
+void AShooterGameMode::PostInitializeComponents()
 {
 	if(!TeamsManager)
 	{
 		TeamsManager = NewObject<UTeamsManager>();
 	}
 	Super::PostInitializeComponents();
-	GetWorldTimerManager().SetTimer(AddScoreTimer, this, &AProjectoPruebasSGameMode::AddScore, 1, true);
+	GetWorldTimerManager().SetTimer(AddScoreTimer, this, &AShooterGameMode::AddScore, 1, true);
 }
 
-AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
+AActor* AShooterGameMode::FindPlayerStart_Implementation(AController* Player, const FString& IncomingName)
 {
-	AProjectPruebasController* MyController = Cast<AProjectPruebasController>(Player);
+	AShooterController* MyController = Cast<AShooterController>(Player);
 	if(MyController)
 	{
 		TeamsManager->AddToTeam(MyController);
@@ -56,9 +56,9 @@ AActor* AProjectoPruebasSGameMode::FindPlayerStart_Implementation(AController* P
 	return nullptr;
 }
 
-UClass* AProjectoPruebasSGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
+UClass* AShooterGameMode::GetDefaultPawnClassForController_Implementation(AController* InController)
 {
-	AProjectPruebasController* MyController= Cast<AProjectPruebasController>(InController);
+	AShooterController* MyController= Cast<AShooterController>(InController);
 	if(MyController)
 	{
 		if(MyController->Team == ETeam::Red)
@@ -72,13 +72,13 @@ UClass* AProjectoPruebasSGameMode::GetDefaultPawnClassForController_Implementati
 	return Super::GetDefaultPawnClassForController_Implementation(InController);
 }
 
-void AProjectoPruebasSGameMode::AddScore()
+void AShooterGameMode::AddScore()
 {
 	if(!IsValid(MyGameState))
 	{
 		if(IsValid(GetWorld()))
 		{
-			MyGameState = Cast<AGameStateProyectoPruebas>(GetWorld()->GetGameState());
+			MyGameState = Cast<AShooterGameState>(GetWorld()->GetGameState());
 		}
 	}
 	if(IsValid(MyGameState))

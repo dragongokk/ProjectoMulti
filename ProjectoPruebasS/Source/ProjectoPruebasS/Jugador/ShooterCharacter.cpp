@@ -1,9 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "ProjectoPruebasSCharacter.h"
+#include "ShooterCharacter.h"
 
-#include "ProjectPruebasController.h"
-#include "../ProjectoPruebasSProjectile.h"
+#include "ShooterController.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -13,15 +12,15 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
-#include "ProjectoPruebasS/ProjectoPruebasSGameMode.h"
-#include "ProjectoPruebasS/TeamsManager.h"
+#include "../Managers/ShooterGameMode.h"
+#include "../Managers/TeamsManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
 // AProjectoPruebasSCharacter
 
-AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
+AShooterCharacter::AShooterCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
@@ -39,7 +38,7 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 	this->AddOwnedComponent(HealthComponent);
 	HealthComponent->SetIsReplicated(true);
 
-	HealthComponent->OnZeroHealth.AddDynamic(this,&AProjectoPruebasSCharacter::OnZeroHealthFunction);
+	HealthComponent->OnZeroHealth.AddDynamic(this,&AShooterCharacter::OnZeroHealthFunction);
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -62,7 +61,7 @@ AProjectoPruebasSCharacter::AProjectoPruebasSCharacter()
 }
 
 
-void AProjectoPruebasSCharacter::BeginPlay()
+void AShooterCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
@@ -83,7 +82,7 @@ void AProjectoPruebasSCharacter::BeginPlay()
 	
 }
 
-void AProjectoPruebasSCharacter::Tick(float DeltaSeconds)
+void AShooterCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 	if (InfiValueMove != 0)
@@ -92,7 +91,7 @@ void AProjectoPruebasSCharacter::Tick(float DeltaSeconds)
 	}
 }
 
-void AProjectoPruebasSCharacter::AttachToCharacter()
+void AShooterCharacter::AttachToCharacter()
 {
 	if(IsValid(FP_Gun))
 	{
@@ -109,12 +108,12 @@ void AProjectoPruebasSCharacter::AttachToCharacter()
 	}
 }
 
-void AProjectoPruebasSCharacter::OnRep_WeaponChange()
+void AShooterCharacter::OnRep_WeaponChange()
 {
 	AttachToCharacter();
 }
 
-void AProjectoPruebasSCharacter::DestroyWeapon()
+void AShooterCharacter::DestroyWeapon()
 {
 	if(FP_Gun->IsValidLowLevel())
 	{
@@ -132,14 +131,14 @@ void AProjectoPruebasSCharacter::DestroyWeapon()
 
 //////////////////////////////////////////////////////////////////////////// Input
 
-void AProjectoPruebasSCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+void AShooterCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// Set up gameplay key bindings
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 
-void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
+void AShooterCharacter::MoveInfiForward(float Val)
 {
 	if (Val != 0)
 	{
@@ -147,32 +146,32 @@ void AProjectoPruebasSCharacter::MoveInfiForward(float Val)
 	}
 }
 
-void AProjectoPruebasSCharacter::PossessedBy(AController* NewController)
+void AShooterCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	ProjectPruebasController = Cast<AProjectPruebasController>(NewController);
+	ProjectPruebasController = Cast<AShooterController>(NewController);
 	if(ProjectPruebasController)
 	{
 		Team = ProjectPruebasController->Team;
 	}
 }
 
-AProjectPruebasController* AProjectoPruebasSCharacter::GetMyController()
+AShooterController* AShooterCharacter::GetMyController()
 {
 	return ProjectPruebasController;
 }
 
 
-void AProjectoPruebasSCharacter::OnZeroHealthFunction()
+void AShooterCharacter::OnZeroHealthFunction()
 {
 	if(GetLocalRole() == ROLE_Authority) //En principio esta función debería ejecutarse si o si en servidor pero por si acaso lo compruebo
 	{
-		this->SetActorLocation(ProjectPruebasController->SpawnForThisController->GetActorLocation(),true,nullptr,ETeleportType::TeleportPhysics);
+		this->SetActorLocation(ProjectPruebasController->SpawnForThisController->GetActorLocation(),false,nullptr,ETeleportType::TeleportPhysics);
 		HealthComponent->ResetHealth();
 	}
 }
 
-void AProjectoPruebasSCharacter::Reload()
+void AShooterCharacter::Reload()
 {
 	if(FP_Gun)
 	{
@@ -180,7 +179,7 @@ void AProjectoPruebasSCharacter::Reload()
 	}
 }
 
-FRotator AProjectoPruebasSCharacter::GetAimView()
+FRotator AShooterCharacter::GetAimView()
 {
 	const FVector AimDirWS = GetBaseAimRotation().Vector();
 	const FVector AimDirLS = ActorToWorld().InverseTransformVectorNoScale(AimDirWS);
@@ -189,15 +188,15 @@ FRotator AProjectoPruebasSCharacter::GetAimView()
 	return AimRotLS;
 }
 
-void AProjectoPruebasSCharacter::BeginDestroy()
+void AShooterCharacter::BeginDestroy()
 {
 	DestroyWeapon();
 	if(GetLocalRole() == ROLE_Authority)
 	{
-		AProjectoPruebasSGameMode* MyGamemode =Cast<AProjectoPruebasSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		AShooterGameMode* MyGamemode =Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		if(MyGamemode)
 		{
-			MyGamemode->TeamsManager->RemoveToTheTeam(Cast<AProjectPruebasController>(this->GetController()));
+			MyGamemode->TeamsManager->RemoveToTheTeam(Cast<AShooterController>(this->GetController()));
 		}
 	}
 	Super::BeginDestroy();
@@ -205,7 +204,7 @@ void AProjectoPruebasSCharacter::BeginDestroy()
 
 
 
-void AProjectoPruebasSCharacter::OnFire()
+void AShooterCharacter::OnFire()
 {
 	if (this->IsLocallyControlled() && GetNetMode() == NM_Client)
 	{
@@ -213,7 +212,7 @@ void AProjectoPruebasSCharacter::OnFire()
 	}
 }
 
-void AProjectoPruebasSCharacter::MoveForward(float Value)
+void AShooterCharacter::MoveForward(float Value)
 {
 	if (Value != 0.0f)
 	{
@@ -222,7 +221,7 @@ void AProjectoPruebasSCharacter::MoveForward(float Value)
 	}
 }
 
-void AProjectoPruebasSCharacter::MoveRight(float Value)
+void AShooterCharacter::MoveRight(float Value)
 {
 	if (Value != 0.0f)
 	{
@@ -231,7 +230,7 @@ void AProjectoPruebasSCharacter::MoveRight(float Value)
 	}
 }
 
-void AProjectoPruebasSCharacter::TurnAtRate(float Rate)
+void AShooterCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
@@ -239,19 +238,19 @@ void AProjectoPruebasSCharacter::TurnAtRate(float Rate)
 	
 }
 
-void AProjectoPruebasSCharacter::LookUpAtRate(float Rate)
+void AShooterCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 	ReplicatePitch(FirstPersonCameraComponent->GetComponentRotation());
 }
 
-void AProjectoPruebasSCharacter::ReplicatePitch_Implementation(FRotator Rotation)
+void AShooterCharacter::ReplicatePitch_Implementation(FRotator Rotation)
 {
 	FirstPersonCameraComponent->SetWorldRotation(Rotation);
 }
 
-float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+float AShooterCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
                                              AController* EventInstigator, AActor* DamageCauser)
 {
 	if(GetLocalRole() == ROLE_Authority)
@@ -263,8 +262,8 @@ float AProjectoPruebasSCharacter::TakeDamage(float DamageAmount, FDamageEvent co
 	return DamageAmount;
 }
 
-void AProjectoPruebasSCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AProjectoPruebasSCharacter, FP_Gun);
+	DOREPLIFETIME(AShooterCharacter, FP_Gun);
 }
